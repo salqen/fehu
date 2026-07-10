@@ -558,13 +558,13 @@ const FO_CSS = `
 }
 @media (prefers-reduced-motion:reduce){ .fo-scene{ transition:none; } }
 
-/* ── FehuOrbital hero override ── */
+/* ── FehuOrbital hero override — orbit v normálnom toku, text POD ním ── */
 .hero .fo-wrap{
-  position:absolute; inset:0; min-height:unset; height:100%;
-  background:none;
+  position:relative; inset:auto; min-height:unset; height:auto;
+  background:none; overflow:visible; flex:0 0 auto; width:auto;
 }
 .hero .fo-scene{
-  width:min(760px,90vw,82vh); height:min(760px,90vw,82vh); max-width:none; max-height:none;
+  width:min(640px,92vw,56vh); height:min(640px,92vw,56vh); max-width:none; max-height:none;
 }
 .hero .fo-bottom{ display:none; }
 `;
@@ -766,8 +766,9 @@ export default function FehuFire() {
                 {t:"Reporting & dáta", n:"05"},
               ].map((p,i)=>{
                 const a = (-90 + i*72) * Math.PI/180;
-                const x = 50 + Math.cos(a)*44, y = 50 + Math.sin(a)*44;
-                return <span key={i} className="pillar-label" style={{left:`${x}%`,top:`${y}%`}}>
+                const x = 50 + Math.cos(a)*46, y = 50 + Math.sin(a)*46;
+                const anchor = ["pl-top","pl-right","pl-br","pl-bl","pl-left"][i];
+                return <span key={i} className={`pillar-label ${anchor}`} style={{left:`${x}%`,top:`${y}%`}}>
                   <i>{p.n}</i>{p.t}
                 </span>;
               })}
@@ -966,7 +967,7 @@ export default function FehuFire() {
           <div className="client-grid">
             {CLIENTS.map((c, i) => (
               <div className={"client-logo rv-scale"} style={{transitionDelay:`${i*60}ms`}} key={i}>
-                <span className="cl-rune">ᚠ</span>
+                <img className="cl-rune-img" src={RUNE_LOGO} alt="" aria-hidden="true" />
                 <span className="cl-name">{c}</span>
               </div>
             ))}
@@ -1043,9 +1044,9 @@ export default function FehuFire() {
           <div className="foot-cols">
             <div className="foot-col">
               <h4>Služby</h4>
-              <button onClick={()=>scrollTo("reklama")}>Platená reklama</button>
+              <button onClick={()=>scrollTo("obsah")}>Platená reklama</button>
               <button onClick={()=>scrollTo("obsah")}>Obsah & kreatíva</button>
-              <button onClick={()=>scrollTo("web")}>Web & konverzie</button>
+              <button onClick={()=>scrollTo("obsah")}>Web & konverzie</button>
             </div>
             <div className="foot-col">
               <h4>Spoločnosť</h4>
@@ -1108,6 +1109,8 @@ const CSS = `
 }
 
 .serif-it{ font-family:'Instrument Serif',serif; font-style:italic; font-weight:400; }
+::selection{ background:var(--accent); color:var(--accent-ink); }
+html{ scroll-behavior:smooth; }
 
 /* ---- NAV ---- */
 .nav{
@@ -1153,7 +1156,9 @@ const CSS = `
 
 /* ---- HERO ---- */
 .hero{
-  position:relative; width:100%; height:100vh; min-height:680px;
+  position:relative; width:100%; min-height:100vh; box-sizing:border-box;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:.5rem; padding:5.5rem 1.6rem 2.5rem;
   overflow:hidden;
   background:
     radial-gradient(ellipse 80% 60% at 50% 62%, color-mix(in srgb,var(--accent-2) 22%, transparent) 0%, transparent 55%),
@@ -1218,19 +1223,9 @@ const CSS = `
 }
 
 .hero-copy{
-  position:absolute; left:0; right:0; bottom:0; z-index:12;
-  padding:1.5rem 1.6rem 2.2rem; text-align:center;
-  pointer-events:none;
+  position:relative; z-index:12; width:100%; max-width:820px;
+  margin:0 auto; padding:0; text-align:center;
 }
-.hero-copy::before{
-  content:""; position:absolute; left:0; right:0; bottom:0; top:-70px; z-index:-1;
-  pointer-events:none;
-  background:linear-gradient(to top,
-    var(--bg) 0%,
-    color-mix(in srgb,var(--bg) 90%, transparent) 42%,
-    transparent 100%);
-}
-.hero-copy > *{ pointer-events:auto; }
 .hero-title{
   font-size:clamp(2.4rem,6vw,4.6rem); font-weight:800; line-height:.95;
   letter-spacing:-.03em; margin:0 0 1rem;
@@ -1293,11 +1288,26 @@ const CSS = `
   font-size:.95rem; line-height:1.3; color:var(--fg);
 }
 .pillar-label{
-  position:absolute; transform:translate(-50%,-50%);
-  font-size:.72rem; font-weight:600; color:var(--accent); white-space:nowrap;
-  text-decoration:underline; text-underline-offset:3px;
+  position:absolute;
+  font-size:.7rem; font-weight:600; color:var(--accent); white-space:nowrap;
+  background:color-mix(in srgb,var(--bg) 88%, transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 32%, transparent);
+  padding:.32rem .75rem; border-radius:30px; backdrop-filter:blur(4px);
+  box-shadow:0 4px 18px rgba(0,0,0,.35);
 }
 .pillar-label i{ font-style:normal; font-size:.55rem; opacity:.7; margin-right:.35rem; vertical-align:super; }
+/* kotvenie mimo kruhu — žiadne prekrytie s radarom */
+.pl-top{   transform:translate(-50%,-150%); }
+.pl-right{ transform:translate(10px,-50%); }
+.pl-br{    transform:translate(4px,20%); }
+.pl-bl{    transform:translate(calc(-100% - 4px),20%); }
+.pl-left{  transform:translate(calc(-100% - 10px),-50%); }
+@media (max-width:860px){
+  .pillar-ring{ width:min(420px,80vw); }
+}
+@media (max-width:640px){
+  .pillar-label{ display:none; } /* na mobile info nesú karty nižšie */
+}
 
 /* SLUŽBY light card */
 .sec-services{ padding:3rem 1.6rem; }
@@ -1322,7 +1332,8 @@ const CSS = `
 .serv-row:nth-child(4) .serv-title{ color:var(--accent); }
 
 /* PRÍPADY */
-.sec-cases{ background:var(--bg2); }
+.sec-cases{ background:var(--bg2); text-align:center; }
+.sec-cases .car-meta{ text-align:left; }
 .case-grid{
   display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.2rem; margin-top:2.5rem;
 }
@@ -1501,7 +1512,8 @@ const CSS = `
   transition:background .3s;
 }
 .client-logo:hover{ background:var(--bg2); }
-.cl-rune{ font-size:1.5rem; color:var(--accent); filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 50%, transparent)); }
+.cl-rune-img{ height:28px; width:auto; display:block; opacity:.92;
+  filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 50%, transparent)); }
 .cl-name{ font-size:.72rem; font-weight:700; letter-spacing:.14em; color:var(--fg-dim); }
 .client-logo:hover .cl-name{ color:var(--fg); }
 
@@ -1588,8 +1600,8 @@ const CSS = `
 .data-cell span{font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-dim);margin-top:.3rem;display:block;}
 
 /* ── process steps ── */
-.process-steps{margin-top:4rem;}
-.proc-head{font-size:clamp(1.3rem,2.5vw,1.8rem);font-weight:700;margin:0 0 2rem;letter-spacing:-.02em;}
+.process-steps{margin:4.5rem auto 0;max-width:840px;text-align:left;}
+.proc-head{font-size:clamp(1.3rem,2.5vw,1.8rem);font-weight:700;margin:0 0 2rem;letter-spacing:-.02em;text-align:center;}
 .proc-step{
   display:flex;align-items:flex-start;gap:1.2rem;padding:1.4rem;
   border-left:2px solid color-mix(in srgb,var(--accent) 20%,transparent);
@@ -1606,10 +1618,7 @@ const CSS = `
 }
 .proc-body h4{font-size:.95rem;font-weight:700;margin:0 0 .3rem;}
 .proc-body p{font-size:.8rem;color:var(--fg-dim);margin:0;line-height:1.55;}
-.proc-arrow{
-  position:absolute;right:-1.5rem;top:50%;transform:translateY(-50%);
-  color:color-mix(in srgb,var(--accent) 50%,transparent);font-size:1.2rem;
-}
+.proc-arrow{ display:none; }
 
 /* ── testimonials grid ── */
 .testimonials{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.6rem;margin-top:2.5rem;}
@@ -1631,7 +1640,7 @@ const CSS = `
 .testi-card .quote::after{content:'"';color:var(--accent);font-size:1.4rem;vertical-align:-.2em;margin-left:.15em;}
 
 /* ── CTA form ── */
-.cta-sub{font-size:.88rem;color:var(--fg-dim);margin:.5rem 0 2rem;letter-spacing:.02em;}
+.cta-sub{font-size:.88rem;color:color-mix(in srgb,var(--accent-ink) 78%, transparent);margin:.5rem 0 2rem;letter-spacing:.02em;font-weight:600;}
 .cta-form{width:100%;max-width:520px;margin:0 auto;}
 .cta-fields{display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.2rem;}
 .cta-input{
@@ -1645,7 +1654,8 @@ const CSS = `
 .cta-select{appearance:none;cursor:pointer;}
 .cta-trust{
   display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap;
-  font-size:.65rem;letter-spacing:.08em;color:var(--fg-dim);margin-top:1.2rem;
+  font-size:.65rem;letter-spacing:.08em;font-weight:600;
+  color:color-mix(in srgb,var(--accent-ink) 72%, transparent);margin-top:1.2rem;
 }
 
 /* ── animated gradient heading shimmer (hero title) ── */
@@ -1695,7 +1705,7 @@ const CSS = `
 }
 
 /* ── visual section ── */
-.sec-visual{ padding:6rem 0; }
+.sec-visual{ padding:6rem 1.6rem; }
 .vis-wrap{
   display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center;
 }
@@ -1708,7 +1718,7 @@ const CSS = `
   line-height:1.5;
 }
 .vis-list li::before{
-  content:"ᚠ"; position:absolute; left:0; color:var(--accent); font-size:.7rem;
+  content:"◆"; position:absolute; left:0; top:.15em; color:var(--accent); font-size:.55rem;
 }
 .vis-img{ position:relative; }
 .vis-photo{
@@ -1729,7 +1739,7 @@ const CSS = `
 .vis-badge-lbl{ font-size:.55rem; letter-spacing:.12em; text-transform:uppercase; opacity:.8; }
 
 /* ── showcase section ── */
-.sec-showcase{ padding:5rem 0; }
+.sec-showcase{ padding:5rem 1.6rem; }
 .showcase-wrap{ display:flex; flex-direction:column; align-items:center; gap:2.5rem; }
 .showcase-img{ position:relative; width:100%; max-width:760px; margin:0 auto; }
 .laptop-photo{
@@ -1762,29 +1772,14 @@ const CSS = `
    vertikalne usporiadanie: menu hore, text pod nim (ziadny prekryv).
    ════════════════════════════════════════════════════════════ */
 @media (max-width:900px), (max-height:760px){
-  .hero{
-    height:auto; min-height:100vh;
-    display:flex; flex-direction:column; justify-content:space-between;
-  }
-  .hero .fo-wrap{
-    position:relative; inset:auto; height:auto; min-height:0;
-    flex:0 0 auto; padding:5vh 0 0;
-  }
-  .hero .fo-scene{
-    width:min(560px,86vw,60vh); height:min(560px,86vw,60vh);
-  }
-  .hero-copy{
-    position:relative; left:auto; right:auto; bottom:auto;
-    padding:1rem 1.4rem 3rem;
-  }
-  .hero-copy::before{ display:none; }
+  .hero{ padding-top:4.8rem; }
+  .hero .fo-scene{ width:min(520px,88vw,52vh); height:min(520px,88vw,52vh); }
 }
 
 @media (max-width:560px){
-  .hero .fo-scene{ width:min(440px,88vw,52vh); height:min(440px,88vw,52vh); }
+  .hero .fo-scene{ width:min(440px,90vw,48vh); height:min(440px,90vw,48vh); }
   .hero-title{ font-size:clamp(1.9rem,9vw,2.8rem); }
   .hero-lead{ font-size:.88rem; }
-  .hero-copy{ padding-bottom:2.2rem; }
 }
 
 /* ---- mobilné menu (hamburger) + doladenie okrajov ---- */
@@ -1804,4 +1799,3 @@ const CSS = `
 @media (max-width:760px){ .sec-visual, .sec-showcase{ padding-left:1.4rem; padding-right:1.4rem; } }
 
 `;
-
