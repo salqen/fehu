@@ -434,7 +434,7 @@ function FehuOrbital() {
           onMouseEnter={()=>{ setHover(-2); hoverRef.current=-2; }}
           onMouseLeave={onLeaveSat}
           style={{ opacity: revealed?1:0, transform: revealed?"scale(1)":"scale(.4)" }}>
-          <img className={`fo-rune ${hover!==-1 ? "lit" : ""}`} src={LOGO_EMBLEM} alt="FEHU" />
+          <img className={`fo-rune ${hover!==-1 ? "lit" : ""}`} src="/logo-original.png" alt="FEHU Prosperity" />
         </button>
 
         {/* satellites */}
@@ -496,7 +496,7 @@ const FO_CSS = `
   box-shadow:0 0 0 10px rgba(255,140,20,.08), 0 0 70px rgba(255,120,0,.32), 0 0 120px rgba(255,80,0,.12),
              0 24px 64px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,180,60,.25);
 }
-.fo-rune{ width:118px; height:auto; filter:drop-shadow(0 0 12px rgba(255,150,0,.6)); display:block; transition:filter .35s; }
+.fo-rune{ width:190px; height:auto; filter:drop-shadow(0 0 12px rgba(255,150,0,.6)); display:block; transition:filter .35s; }
 .fo-rune.lit{ filter:drop-shadow(0 0 18px rgba(255,180,40,1)) drop-shadow(0 0 38px rgba(255,120,0,.7)) brightness(1.25); }
 .fo-rune-text{
   font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600;
@@ -539,7 +539,7 @@ const FO_CSS = `
 }
 
 @media (max-width:560px){
-  .fo-rune{ width:74px; }
+  .fo-rune{ width:118px; }
   .fo-sat-icon{ width:26px; height:26px; }
   .fo-sat-label{ font-size:.42rem; }
 }
