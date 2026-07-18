@@ -718,6 +718,43 @@ export default function FehuFire() {
 
       {/* ===== ONE PAGE SEKCIE ===== */}
 
+      {/* O NÁS */}
+      <section className="sec sec-about" ref={setRef("onas")}>
+        <div className="wrap">
+          <p className="eyebrow rv">O nás</p>
+          <div className="rv" style={{transitionDelay:"80ms"}}><h2 className="big-head">
+            Budujeme <span className="serif-it">úspešné</span> firmy a silné značky.
+          </h2></div>
+          <p className="sub-lead rv" style={{transitionDelay:"140ms"}}>
+            <b>Fehu Prosperity</b> je spoločnosť zameraná na budovanie úspešných firiem, silných značiek
+            a dlhodobo udržateľného rastu. Poskytujeme komplexné služby v oblasti biznis stratégie,
+            marketingu, manažmentu, budovania značiek, prieskumu trhu, tvorby video obsahu
+            a profesionálnej prípravy dokumentov.
+          </p>
+          <blockquote className="about-quote rv" style={{transitionDelay:"200ms"}}>
+            „Od nápadu cez stratégiu až po finálnu realizáciu – všetko pod jednou strechou.“
+          </blockquote>
+          <div className="about-body rv" style={{transitionDelay:"260ms"}}>
+            <p>Veríme, že úspešná značka nevzniká náhodou. Je výsledkom jasnej vízie, premyslenej stratégie,
+            kvalitnej komunikácie a dôslednej realizácie. Preto ku každému projektu pristupujeme individuálne
+            a navrhujeme riešenia, ktoré prinášajú reálne výsledky a dlhodobú hodnotu.</p>
+            <p>Za spoločnosťou stojí podnikateľ <b>Boris Marhanský</b>, ktorý počas svojej podnikateľskej kariéry
+            vybudoval a rozvíjal viaceré úspešné projekty. Jeho skúsenosti z oblasti podnikania, marketingu,
+            manažmentu a budovania značiek tvoria základ filozofie Fehu Prosperity – byť partnerom, ktorý
+            nielen radí, ale aktívne pomáha meniť vízie na úspešné projekty.</p>
+            <p>Našim klientom pomáhame vytvárať silnú identitu značky, nastavovať efektívne obchodné
+            a marketingové stratégie, analyzovať trh a identifikovať nové príležitosti na rast. Zároveň
+            zabezpečujeme tvorbu profesionálnych videí, reklamných kampaní, prezentačných materiálov
+            a obchodných dokumentov, ktoré podporujú dôveryhodnosť značky a zvyšujú jej hodnotu.</p>
+            <p>Spájame kreativitu, strategické myslenie, moderné technológie a praktické skúsenosti.
+            Naším cieľom je vytvárať riešenia, ktoré nielen dobre vyzerajú, ale predovšetkým fungujú
+            a prinášajú merateľné výsledky.</p>
+            <p><b>Fehu Prosperity</b> je partner pre podnikateľov, startupy aj etablované spoločnosti,
+            ktoré chcú rásť, budovať silnú značku a uspieť v dynamickom podnikateľskom prostredí.</p>
+          </div>
+        </div>
+      </section>
+
       {/* STRATÉGIA */}
       <section className="sec sec-strategy" ref={setRef("strategia")}>
         <div className="wrap">
@@ -1015,6 +1052,9 @@ export default function FehuFire() {
           <span>⚡ Odpoveď do 24h</span>
           <span>✓ Bez záväzkov</span>
         </div>
+        <p className="cta-email rv" style={{transitionDelay:"400ms"}}>
+          <a href="mailto:office@fehuprosperity.eu">office@fehuprosperity.eu</a>
+        </p>
       </section>
 
       {/* FOOTER */}
@@ -1251,6 +1291,18 @@ html{ scroll-behavior:smooth; }
   font-size:.65rem; letter-spacing:.4em; text-transform:uppercase;
   color:var(--fg-dim); text-align:center; margin:0 0 1rem;
 }
+
+/* O NÁS */
+.sec-about .sub-lead{ max-width:680px; }
+.about-quote{
+  max-width:640px; margin:2rem 0 2.5rem; padding-left:1.2rem;
+  border-left:3px solid var(--accent);
+  font-family:'Instrument Serif',serif; font-style:italic;
+  font-size:1.35rem; line-height:1.4; color:var(--fg);
+}
+.about-body{ display:flex; flex-direction:column; gap:1.1rem; max-width:720px; }
+.about-body p{ margin:0; font-size:.95rem; line-height:1.75; color:var(--fg-dim); }
+.about-body b{ color:var(--fg); font-weight:700; }
 
 /* STRATÉGIA radar */
 .sec-strategy{ text-align:center; }
@@ -1639,6 +1691,9 @@ html{ scroll-behavior:smooth; }
   font-size:.65rem;letter-spacing:.08em;font-weight:600;
   color:color-mix(in srgb,var(--accent-ink) 72%, transparent);margin-top:1.2rem;
 }
+.cta-email{ margin-top:1.4rem; font-size:.9rem; }
+.cta-email a{ color:var(--accent-ink); font-weight:700; text-decoration:none; letter-spacing:.02em; }
+.cta-email a:hover{ text-decoration:underline; }
 
 /* ── animated gradient heading shimmer (hero title) ── */
 @keyframes titleShimmer{
