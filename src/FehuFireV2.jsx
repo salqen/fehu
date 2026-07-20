@@ -3,15 +3,15 @@ import { POSTERS, LOGO_EMBLEM, LOGO_FULL, MENU, FehuOrbital, CSS } from "./FehuF
 
 /* ============================================================
    FEHU — VERZIA 2 · komponenty z COMPONENT SITE
-   • Cursor Trail (ohnivá stopa za kurzorom)
-   • Scroll Progress (gradient lišta hore)
-   • Magnetic Button (CTA tlačidlá)
-   • Interaktívny radar 5 pilierov (hover/klik + auto-cyklus)
-   • Card 3D Tilt (piliere + video dokumenty + foto zakladateľa)
-   • Flip Cards (Projekty)
-   • Coverflow 3D slider (Eventy — RFA plagáty)
+   • Spotlight Hero (kurzorový reflektor + jemná mriežka)
+   • Cursor Trail · Scroll Progress · Magnetic Button
+   • Split-Text Reveal (nadpisy sa odhaľujú po slovách)
+   • Parallax bloby naprieč sekciami
+   • Interaktívny radar 5 pilierov · Card 3D Tilt
+   • Flip Cards (Projekty) · Coverflow 3D (Eventy)
    • Animated Tabs (Médiá) · Accordion (Broadcast)
-   • Footer-mega štýl (reveal, hover-slide linky, giant logo, scroll-top)
+   • Timeline so scroll-progresom (Ako pracujeme)
+   • Footer-mega (reveal, hover-slide, giant logo, scroll-top)
    ============================================================ */
 
 /* ---- Cursor Trail (component site: cursor-trail, preset „Brand") ---- */
@@ -32,7 +32,7 @@ function CursorTrail() {
           vx: (Math.random() - .5) * .9,
           vy: (Math.random() - .5) * .9 - .45,
           size: Math.random() * 2.6 + 1.4,
-          hue: 22 + Math.random() * 20,
+          hue: 42 + Math.random() * 12,
         });
       }
       if (parts.length > 160) parts.splice(0, parts.length - 160);
@@ -105,7 +105,7 @@ function Tilt({ children, className = "", style, max = 10, scale = 1.03 }) {
     const rx = (py - .5) * -2 * max, ry = (px - .5) * 2 * max;
     el.style.transform = `perspective(900px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) scale(${scale})`;
     if (glare.current) glare.current.style.background =
-      `radial-gradient(circle at ${px * 100}% ${py * 100}%, rgba(255,190,80,.20), transparent 55%)`;
+      `radial-gradient(circle at ${px * 100}% ${py * 100}%, rgba(242,214,126,.20), transparent 55%)`;
   };
   const onLeave = () => {
     if (ref.current) ref.current.style.transform = "perspective(900px) rotateX(0) rotateY(0) scale(1)";
@@ -119,6 +119,66 @@ function Tilt({ children, className = "", style, max = 10, scale = 1.03 }) {
     </div>
   );
 }
+
+/* ---- Split-Text Reveal (component site: split-text-reveal) ---- */
+function SplitHead({ segments, className = "big-head" }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { el.classList.add("st-in"); io.disconnect(); }
+    }), { threshold: .3 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  let idx = 0;
+  return (
+    <h2 className={`${className} st-head`} ref={ref}>
+      {segments.map((s, si) =>
+        s.br
+          ? <br key={si} />
+          : s.t.split(" ").filter(Boolean).map((w, wi) => (
+              <span className="st-w" key={`${si}-${wi}`}>
+                <span className={`st-wi ${s.serif ? "serif-it" : ""}`}
+                  style={{ transitionDelay: `${(idx++) * 55}ms` }}>{w}</span>
+              </span>
+            ))
+      )}
+    </h2>
+  );
+}
+
+/* ---- Parallax (component site: parallax-layers) ---- */
+function useParallax() {
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = null;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        const vh = window.innerHeight;
+        document.querySelectorAll("[data-plx]").forEach(el => {
+          const speed = parseFloat(el.dataset.plx || "0.1");
+          const r = el.getBoundingClientRect();
+          const mid = r.top + r.height / 2 - vh / 2;
+          el.style.setProperty("--plx", `${(-mid * speed).toFixed(1)}px`);
+        });
+      });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+}
+const Blob = ({ style, speed = "0.12" }) => (
+  <div className="plx-blob" data-plx={speed} style={style} aria-hidden="true" />
+);
 
 /* ---- Interaktívny radar 5 pilierov ---- */
 function InteractiveRadar({ items, active, setActive }) {
@@ -228,7 +288,7 @@ function Coverflow({ items }) {
   );
 }
 
-/* ---- Flip Cards — Projekty (component site: flip-card + glare) ---- */
+/* ---- Flip Cards — Projekty (component site: flip-card) ---- */
 function FlipCard({ p, delay }) {
   return (
     <div className="flip rv-scale" style={{ transitionDelay: `${delay}ms` }}>
@@ -313,6 +373,44 @@ function Accordion({ items }) {
   );
 }
 
+/* ---- Timeline (component site: timeline) ---- */
+function Timeline({ items }) {
+  const ref = useRef(null);
+  const fillRef = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add("is-visible");
+    }), { threshold: .3 });
+    el.querySelectorAll(".tl-item").forEach(i => io.observe(i));
+    let raf = null;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        const r = el.getBoundingClientRect();
+        const p = Math.min(1, Math.max(0, (window.innerHeight * .7 - r.top) / r.height));
+        if (fillRef.current) fillRef.current.style.height = `${p * 100}%`;
+      });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { io.disconnect(); window.removeEventListener("scroll", onScroll); };
+  }, []);
+  return (
+    <div className="mv-timeline" ref={ref}>
+      <div className="mv-timeline__line"><div className="mv-timeline__fill" ref={fillRef} /></div>
+      {items.map((it, i) => (
+        <div className="tl-item" key={i}>
+          <span className="tl-num">{it.n}</span>
+          <h3>{it.t}</h3>
+          <p>{it.d}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ---- dáta ---- */
 const DOC_CARDS = [
   { n: "01", t: "Tvrdá cesta Kubou", d: "Trojdielny dokumentárny seriál pre TV Markíza a platformu VOYO — autentický pohľad na tréningový camp, profesionálnych športovcov a život domácich Kubáncov." },
@@ -351,18 +449,30 @@ const BROADCAST_ITEMS = [
   { n: "04", t: "Video formáty", d: "Profesionálne video formáty pre vašu značku — kompletné riešenie od prvotného nápadu až po finálnu realizáciu." },
 ];
 
+const TIMELINE_ITEMS = [
+  { n: "01", t: "Discovery", d: "Spoznáme váš biznis, ciele, zákazníkov a konkurenciu. Audit existujúcich aktivít a dát." },
+  { n: "02", t: "Stratégia", d: "Na základe dát navrhneme biznis a growth stratégiu s jasnými KPI a harmonogramom." },
+  { n: "03", t: "Realizácia", d: "Kampane, video produkcia, eventy aj mediálna komunikácia — všetko v dohodnutom čase a kvalite." },
+  { n: "04", t: "Meranie & optimalizácia", d: "Nepretržité testovanie, meranie a zlepšovanie výsledkov. Prehľadné reporty každý mesiac." },
+  { n: "05", t: "Dlhodobé partnerstvo", d: "Rastieme spolu s vami — stratégiu priebežne rozvíjame podľa výsledkov a nových príležitostí." },
+];
+
 /* ============================================================ */
 export default function FehuFireV2() {
   const [dark, setDark] = useState(true);
   const [navOpen, setNavOpen] = useState(false);
   const [activePillar, setActivePillar] = useState(0);
   const sectionRefs = useRef({});
+  const heroRef = useRef(null);
+  const spotRef = useRef(null);
 
   const scrollTo = useCallback((id) => {
     const el = sectionRefs.current[id];
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
   const setRef = (id) => (el) => { sectionRefs.current[id] = el; };
+
+  useParallax();
 
   /* scroll reveal */
   useEffect(() => {
@@ -373,6 +483,21 @@ export default function FehuFireV2() {
       document.querySelectorAll(".rv,.rv-l,.rv-r,.rv-scale,.rv-s").forEach(el => io.observe(el));
     }, 400);
     return () => { clearTimeout(t); io.disconnect(); };
+  }, []);
+
+  /* Spotlight Hero (component site: spotlight-hero) */
+  useEffect(() => {
+    const el = heroRef.current, light = spotRef.current;
+    if (!el || !light) return;
+    const onMove = (e) => {
+      const r = el.getBoundingClientRect();
+      light.style.background =
+        `radial-gradient(480px circle at ${e.clientX - r.left}px ${e.clientY - r.top}px, rgba(232,196,106,.15), transparent 65%)`;
+    };
+    const onLeave = () => { light.style.background = "none"; };
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerleave", onLeave);
+    return () => { el.removeEventListener("pointermove", onMove); el.removeEventListener("pointerleave", onLeave); };
   }, []);
 
   return (
@@ -402,8 +527,10 @@ export default function FehuFireV2() {
         )}
       </nav>
 
-      {/* HERO — orbitálne kruhy */}
-      <header className="hero" ref={setRef("top")}>
+      {/* HERO — orbitálne kruhy + spotlight */}
+      <header className="hero hero-spot" ref={(el) => { heroRef.current = el; setRef("top")(el); }}>
+        <div className="hero-grid-bg" aria-hidden="true" />
+        <div className="hero-spotlight" ref={spotRef} aria-hidden="true" />
         <FehuOrbital onNavigate={scrollTo} />
         <div className="hero-copy">
           <h1 className="hero-title">
@@ -426,54 +553,56 @@ export default function FehuFireV2() {
 
       {/* O NÁS */}
       <section className="sec sec-about" ref={setRef("onas")}>
-        <div className="wrap">
-          <p className="eyebrow rv">O nás</p>
-          <div className="rv" style={{transitionDelay:"80ms"}}><h2 className="big-head">
-            Budujeme <span className="serif-it">úspešné</span> firmy a silné značky.
-          </h2></div>
-          <p className="sub-lead rv" style={{transitionDelay:"140ms"}}>
-            <b>Fehu Prosperity</b> je spoločnosť zameraná na budovanie úspešných firiem, silných značiek
-            a dlhodobo udržateľného rastu. Poskytujeme komplexné služby v oblasti biznis stratégie,
-            marketingu, manažmentu, budovania značiek, prieskumu trhu, tvorby video obsahu
-            a profesionálnej prípravy dokumentov.
-          </p>
-          <blockquote className="about-quote rv" style={{transitionDelay:"200ms"}}>
-            „Od nápadu cez stratégiu až po finálnu realizáciu – všetko pod jednou strechou.“
-          </blockquote>
-          <div className="about-grid rv" style={{transitionDelay:"260ms"}}>
-          <div className="about-body">
-            <p>Veríme, že úspešná značka nevzniká náhodou. Je výsledkom jasnej vízie, premyslenej stratégie,
-            kvalitnej komunikácie a dôslednej realizácie. Preto ku každému projektu pristupujeme individuálne
-            a navrhujeme riešenia, ktoré prinášajú reálne výsledky a dlhodobú hodnotu.</p>
-            <p>Za spoločnosťou stojí podnikateľ <b>Boris Marhanský</b>, ktorý počas svojej podnikateľskej kariéry
-            vybudoval a rozvíjal viaceré úspešné projekty. Jeho skúsenosti z oblasti podnikania, marketingu,
-            manažmentu a budovania značiek tvoria základ filozofie Fehu Prosperity – byť partnerom, ktorý
-            nielen radí, ale aktívne pomáha meniť vízie na úspešné projekty.</p>
-            <p>Našim klientom pomáhame vytvárať silnú identitu značky, nastavovať efektívne obchodné
-            a marketingové stratégie, analyzovať trh a identifikovať nové príležitosti na rast. Zároveň
-            zabezpečujeme tvorbu profesionálnych videí, reklamných kampaní, prezentačných materiálov
-            a obchodných dokumentov, ktoré podporujú dôveryhodnosť značky a zvyšujú jej hodnotu.</p>
-            <p>Spájame kreativitu, strategické myslenie, moderné technológie a praktické skúsenosti.
-            Naším cieľom je vytvárať riešenia, ktoré nielen dobre vyzerajú, ale predovšetkým fungujú
-            a prinášajú merateľné výsledky.</p>
-            <p><b>Fehu Prosperity</b> je partner pre podnikateľov, startupy aj etablované spoločnosti,
-            ktoré chcú rásť, budovať silnú značku a uspieť v dynamickom podnikateľskom prostredí.</p>
+        <Blob speed="0.10" style={{ width: 340, height: 340, top: "8%", right: "-90px", background: "rgba(216,172,60,.07)" }} />
+        <div className="wrap onas-grid">
+          <div className="onas-main">
+            <p className="eyebrow rv" style={{textAlign:"left"}}>O nás</p>
+            <SplitHead segments={[{ t: "Budujeme " }, { t: "úspešné", serif: true }, { t: " firmy a silné značky." }]} />
+            <p className="sub-lead rv" style={{transitionDelay:"140ms", maxWidth:"none"}}>
+              <b>Fehu Prosperity</b> je spoločnosť zameraná na budovanie úspešných firiem, silných značiek
+              a dlhodobo udržateľného rastu. Poskytujeme komplexné služby v oblasti biznis stratégie,
+              marketingu, manažmentu, budovania značiek, prieskumu trhu, tvorby video obsahu
+              a profesionálnej prípravy dokumentov.
+            </p>
+            <div className="about-body rv" style={{transitionDelay:"220ms", maxWidth:"none"}}>
+              <p>Veríme, že úspešná značka nevzniká náhodou. Je výsledkom jasnej vízie, premyslenej stratégie,
+              kvalitnej komunikácie a dôslednej realizácie. Preto ku každému projektu pristupujeme individuálne
+              a navrhujeme riešenia, ktoré prinášajú reálne výsledky a dlhodobú hodnotu.</p>
+              <p>Za spoločnosťou stojí podnikateľ <b>Boris Marhanský</b>, ktorý počas svojej podnikateľskej kariéry
+              vybudoval a rozvíjal viaceré úspešné projekty. Jeho skúsenosti z oblasti podnikania, marketingu,
+              manažmentu a budovania značiek tvoria základ filozofie Fehu Prosperity – byť partnerom, ktorý
+              nielen radí, ale aktívne pomáha meniť vízie na úspešné projekty.</p>
+              <p>Našim klientom pomáhame vytvárať silnú identitu značky, nastavovať efektívne obchodné
+              a marketingové stratégie, analyzovať trh a identifikovať nové príležitosti na rast. Zároveň
+              zabezpečujeme tvorbu profesionálnych videí, reklamných kampaní, prezentačných materiálov
+              a obchodných dokumentov, ktoré podporujú dôveryhodnosť značky a zvyšujú jej hodnotu.</p>
+              <p><b>Fehu Prosperity</b> je partner pre podnikateľov, startupy aj etablované spoločnosti,
+              ktoré chcú rásť, budovať silnú značku a uspieť v dynamickom podnikateľskom prostredí.</p>
+            </div>
           </div>
-          <Tilt className="founder-card" max={6} scale={1.02}>
-            <img src="/boris-marhansky.jpg" alt="Boris Marhanský — zakladateľ Fehu Prosperity" loading="lazy" />
-            <figcaption><b>Boris Marhanský</b><span>Zakladateľ · Fehu Prosperity</span></figcaption>
-          </Tilt>
-          </div>
+          <aside className="onas-side rv-r" style={{transitionDelay:"180ms"}}>
+            <Tilt className="founder-card" max={6} scale={1.02}>
+              <img src="/boris-marhansky.jpg" alt="Boris Marhanský — zakladateľ Fehu Prosperity" loading="lazy" />
+              <figcaption><b>Boris Marhanský</b><span>Zakladateľ · Fehu Prosperity</span></figcaption>
+            </Tilt>
+            <blockquote className="side-quote">
+              „Od nápadu cez stratégiu až po finálnu realizáciu – všetko pod jednou strechou.“
+            </blockquote>
+            <div className="side-tags">
+              <span>Stratégia</span><span>Brand</span><span>Produkcia</span><span>Médiá</span><span>Eventy</span>
+            </div>
+          </aside>
         </div>
       </section>
 
       {/* STRATÉGIA — interaktívny radar + tilt karty */}
       <section className="sec sec-strategy" ref={setRef("strategia")}>
+        <Blob speed="0.14" style={{ width: 300, height: 300, top: "12%", left: "-70px", background: "rgba(180,132,30,.06)" }} />
         <div className="wrap">
-          <div className="rv"><h2 className="big-head">
-            Dátami riadené, na výkon zamerané<br/>
-            <span className="serif-it">rastové</span> biznisové riešenia.
-          </h2></div>
+          <SplitHead segments={[
+            { t: "Dátami riadené, na výkon zamerané" }, { br: true },
+            { t: "rastové", serif: true }, { t: " biznisové riešenia." },
+          ]} />
           <div className="rv" style={{transitionDelay:"100ms"}}><p className="sub-lead">
             Naše riešenia pomohli firmám každej veľkosti rásť rýchlejšie — bez ohľadu
             na odvetvie či model príjmov.
@@ -496,32 +625,33 @@ export default function FehuFireV2() {
         </div>
       </section>
 
-      {/* VIDEO / DOKUMENTY — 3D tilt karty */}
+      {/* VIDEO / DOKUMENTY — sticky text + karty */}
       <section className="sec sec-about" ref={setRef("video")}>
-        <div className="wrap">
-          <p className="eyebrow rv">Video / dokumenty</p>
-          <div className="rv" style={{transitionDelay:"80ms"}}><h2 className="big-head">
-            Skutočné príbehy so <span className="serif-it">silným</span> spracovaním.
-          </h2></div>
-          <p className="sub-lead rv" style={{transitionDelay:"140ms"}}>
-            <b>Fehu Prosperity</b> sa venuje tvorbe dokumentárnych filmov a video dokumentov, ktoré zachytávajú
-            skutočné príbehy, významné osobnosti a jedinečné udalosti. Každý projekt realizujeme od prvotného
-            konceptu cez scenár, produkciu a natáčanie až po finálnu postprodukciu.
-          </p>
-          <div className="pillar-cards" style={{marginTop:"1rem"}}>
+        <Blob speed="0.11" style={{ width: 320, height: 320, top: "30%", right: "-80px", background: "rgba(230,186,80,.06)" }} />
+        <div className="wrap video-split">
+          <div className="video-side">
+            <p className="eyebrow rv" style={{textAlign:"left"}}>Video / dokumenty</p>
+            <SplitHead segments={[{ t: "Skutočné príbehy so " }, { t: "silným", serif: true }, { t: " spracovaním." }]} />
+            <p className="sub-lead rv" style={{transitionDelay:"140ms", margin:0}}>
+              <b>Fehu Prosperity</b> sa venuje tvorbe dokumentárnych filmov a video dokumentov, ktoré zachytávajú
+              skutočné príbehy, významné osobnosti a jedinečné udalosti. Každý projekt realizujeme od prvotného
+              konceptu cez scenár, produkciu a natáčanie až po finálnu postprodukciu.
+            </p>
+            <p className="video-note rv" style={{transitionDelay:"200ms"}}>
+              Naším cieľom je dokumentárny obsah s vysokou produkčnou kvalitou, silným príbehom
+              a vizuálnym spracovaním, ktoré zanechá trvalý dojem.
+            </p>
+          </div>
+          <div className="video-cards">
             {DOC_CARDS.map((p,i)=>(
-              <div className="rv-scale tilt-holder" style={{transitionDelay:`${i*100}ms`}} key={i}>
-                <Tilt className="pillar-card">
+              <div className="rv-scale tilt-holder vc-item" style={{transitionDelay:`${i*120}ms`}} key={i}>
+                <Tilt className="pillar-card video-card">
                   <span className="pc-num">{p.n}</span>
                   <h4 className="pc-title">{p.t}</h4>
                   <p className="pc-desc">{p.d}</p>
                 </Tilt>
               </div>
             ))}
-          </div>
-          <div className="about-body rv" style={{marginTop:"2.5rem"}}>
-            <p>Naším cieľom je vytvárať dokumentárny obsah s vysokou produkčnou kvalitou, silným príbehom
-            a vizuálnym spracovaním, ktoré osloví divákov a zanechá trvalý dojem.</p>
           </div>
         </div>
       </section>
@@ -531,29 +661,40 @@ export default function FehuFireV2() {
         <div className="wrap vis-wrap">
           <div className="vis-text rv-l">
             <p className="eyebrow" style={{textAlign:"left", margin:0}}>Prieskum trhu</p>
-            <h2 className="big-head">
-              Rozhodnutia postavené na <span className="serif-it">dátach</span>,<br/>nie na domnienkach.
-            </h2>
+            <SplitHead segments={[
+              { t: "Rozhodnutia postavené na " }, { t: "dátach", serif: true }, { t: "," }, { br: true },
+              { t: "nie na domnienkach." },
+            ]} />
             <p className="sub-lead" style={{margin:0}}>
               Pre našich klientov realizujeme profesionálne prieskumy trhu, ktoré poskytujú
               reálny pohľad na názory, správanie a potreby cieľovej skupiny.
             </p>
-            <ul className="vis-list">
-              <li>Prieskumy prostredníctvom call centra</li>
-              <li>Osobné rozhovory v teréne</li>
-              <li>Vyškolení anketári v uliciach a na vybraných miestach</li>
-              <li>Analýza, vyhodnotenie a praktické odporúčania</li>
-            </ul>
+            <div className="about-body" style={{maxWidth:"none"}}>
+              <p>Na základe výsledkov prieskumu pomáhame klientom efektívnejšie nastavovať marketingové kampane,
+              budovať značku, uvádzať nové produkty na trh, lepšie porozumieť svojim zákazníkom a vytvárať
+              biznis stratégie založené na reálnych dátach.</p>
+              <p>Naším cieľom nie je len zbierať informácie, ale poskytovať <b>kvalitné analýzy</b>, ktoré klientom
+              pomáhajú prijímať správne rozhodnutia, minimalizovať riziká a dosahovať lepšie obchodné výsledky.</p>
+            </div>
           </div>
           <div className="vis-text rv-r research-side" style={{transitionDelay:"150ms"}}>
-            <div className="research-card">
-              <div className="about-body">
-                <p>Na základe výsledkov prieskumu pomáhame klientom efektívnejšie nastavovať marketingové kampane,
-                budovať značku, uvádzať nové produkty na trh, lepšie porozumieť svojim zákazníkom a vytvárať
-                biznis stratégie založené na reálnych dátach.</p>
-                <p>Naším cieľom nie je len zbierať informácie, ale poskytovať <b>kvalitné analýzy</b>, ktoré klientom
-                pomáhajú prijímať správne rozhodnutia, minimalizovať riziká a dosahovať lepšie obchodné výsledky.</p>
-              </div>
+            <div className="research-tiles">
+              {[
+                { t: "Call centrum", d: "Telefonické prieskumy s vyškoleným tímom.",
+                  ic: <><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.27a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7a2 2 0 0 1 1.7 2z"/></> },
+                { t: "Terén", d: "Osobné rozhovory priamo u respondentov.",
+                  ic: <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></> },
+                { t: "Anketári", d: "V uliciach a na vybraných miestach.",
+                  ic: <><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20v-1a6 6 0 0 1 12 0v1M15 20v-1a5 5 0 0 1 6-4.9"/></> },
+                { t: "Analýzy", d: "Vyhodnotenie a praktické odporúčania.",
+                  ic: <><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></> },
+              ].map((r, i) => (
+                <div className="rt" key={i} style={{transitionDelay:`${i*70}ms`}}>
+                  <svg viewBox="0 0 24 24">{r.ic}</svg>
+                  <b>{r.t}</b>
+                  <span>{r.d}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -561,11 +702,10 @@ export default function FehuFireV2() {
 
       {/* PROJEKTY — flip karty */}
       <section className="sec sec-clients" ref={setRef("projekty")}>
+        <Blob speed="0.13" style={{ width: 360, height: 360, top: "20%", left: "-100px", background: "rgba(216,172,60,.06)" }} />
         <div className="wrap center-wrap">
           <p className="eyebrow rv">Projekty</p>
-          <div className="rv" style={{transitionDelay:"80ms"}}><h2 className="big-head">
-            Projekty, na ktorých <span className="serif-it">spolupracujeme</span>.
-          </h2></div>
+          <SplitHead className="big-head center-split" segments={[{ t: "Projekty, na ktorých " }, { t: "spolupracujeme", serif: true }, { t: "." }]} />
           <div className="rv" style={{transitionDelay:"160ms"}}><p className="sub-lead center-lead">
             Naše skúsenosti sme získavali pri spolupráci na úspešných projektoch z oblasti športu, médií,
             e-commerce, distribúcie, gastronómie a podnikania. Prejdite kurzorom po karte a spoznajte detail.
@@ -588,11 +728,12 @@ export default function FehuFireV2() {
 
       {/* EVENTY — coverflow 3D slider */}
       <section className="sec sec-cases" ref={setRef("eventy")}>
+        <Blob speed="0.10" style={{ width: 300, height: 300, top: "35%", right: "-80px", background: "rgba(176,128,30,.06)" }} />
         <div className="wrap">
           <p className="eyebrow rv">Eventy</p>
-          <div className="rv" style={{transitionDelay:"80ms"}}><h2 className="big-head center">
-            Podujatia <span className="serif-it">na kľúč</span> — od konceptu po deň D
-          </h2></div>
+          <SplitHead className="big-head center center-split" segments={[
+            { t: "Podujatia " }, { t: "na kľúč", serif: true }, { t: " — od konceptu po deň D" },
+          ]} />
           <div className="rv" style={{transitionDelay:"160ms"}}><p className="sub-lead center-lead">
             Zabezpečujeme kompletnú organizáciu podujatí na kľúč. Špecializujeme sa na športové podujatia,
             hudobné festivaly a koncerty, firemné eventy, konferencie, galavečery, VIP podujatia aj promo akcie.
@@ -621,21 +762,38 @@ export default function FehuFireV2() {
         </div>
       </section>
 
-      {/* BROADCAST & PODCAST — accordion */}
+      {/* BROADCAST & PODCAST — split s akordeónom */}
       <section className="sec sec-data" ref={setRef("broadcast")}>
-        <div className="wrap">
-          <p className="eyebrow rv" style={{textAlign:"left"}}>Broadcast & Podcast</p>
-          <div className="rv" style={{transitionDelay:"80ms"}}><h2 className="big-head">
-            Naživo aj <span className="serif-it">na mieru</span>.
-          </h2></div>
-          <div className="rv" style={{transitionDelay:"160ms"}}><p className="sub-lead">
-            Zabezpečujeme profesionálnu produkciu živých vysielaní, online prenosov a podcastov na mieru.
-            Vďaka moderným technológiám a skúsenému produkčnému tímu vytvoríme riešenie prispôsobené
-            potrebám každého klienta.
-          </p></div>
-          <div className="rv" style={{transitionDelay:"220ms"}}>
+        <Blob speed="0.12" style={{ width: 300, height: 300, top: "15%", left: "-70px", background: "rgba(214,170,56,.05)" }} />
+        <div className="wrap bc-split">
+          <div className="bc-side">
+            <p className="eyebrow rv" style={{textAlign:"left"}}>Broadcast & Podcast</p>
+            <SplitHead segments={[{ t: "Naživo aj " }, { t: "na mieru", serif: true }, { t: "." }]} />
+            <p className="sub-lead rv" style={{transitionDelay:"160ms", margin:0}}>
+              Zabezpečujeme profesionálnu produkciu živých vysielaní, online prenosov a podcastov na mieru.
+              Vďaka moderným technológiám a skúsenému produkčnému tímu vytvoríme riešenie prispôsobené
+              potrebám každého klienta.
+            </p>
+          </div>
+          <div className="rv bc-acc" style={{transitionDelay:"220ms"}}>
             <Accordion items={BROADCAST_ITEMS} />
           </div>
+        </div>
+      </section>
+
+      {/* AKO PRACUJEME — timeline */}
+      <section className="sec sec-timeline">
+        <Blob speed="0.14" style={{ width: 340, height: 340, top: "25%", right: "-90px", background: "rgba(200,156,48,.06)" }} />
+        <div className="wrap tl-wrap">
+          <div className="tl-side">
+            <p className="eyebrow rv" style={{textAlign:"left"}}>Ako pracujeme</p>
+            <SplitHead segments={[{ t: "Od nápadu po " }, { t: "výsledky", serif: true }, { t: "." }]} />
+            <p className="sub-lead rv" style={{transitionDelay:"140ms", margin:0}}>
+              Jasný a overený proces, v ktorom vždy viete, čo sa deje a čo bude nasledovať.
+              Scrollujte a pozrite si našu cestu k výsledkom.
+            </p>
+          </div>
+          <Timeline items={TIMELINE_ITEMS} />
         </div>
       </section>
 
@@ -646,8 +804,9 @@ export default function FehuFireV2() {
             <defs><path id="cir2" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"/></defs>
             <text className="badge-text"><textPath href="#cir2" startOffset="0">RÁSŤ · STRATÉGIA · OPTIMALIZÁCIA · KONVERTOVAŤ · </textPath></text>
           </svg>
-          <div className="badge-core">
-            <svg viewBox="0 0 24 24" className="globe"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+          <div className="badge-core badge-fire">
+            <span className="badge-flame" aria-hidden="true" />
+            <img src="/logo-original.png" alt="FEHU" className="badge-rune" />
           </div>
         </div>
         <p className="cta-eyebrow rv" style={{transitionDelay:"0ms"}}>Poďme na obežnú dráhu</p>
@@ -740,7 +899,7 @@ export default function FehuFireV2() {
         <Magnetic strength={12} className="scroll-top-holder">
           <button className="scroll-top" onClick={() => scrollTo("top")} aria-label="Späť hore">↑</button>
         </Magnetic>
-        <div className="foot-giant" aria-hidden="true">FEHU</div>
+        <div className="foot-giant" data-plx="0.06" aria-hidden="true">FEHU</div>
       </footer>
     </div>
   );
@@ -761,6 +920,28 @@ const V2_CSS = `
 
 /* ── Magnetic ── */
 .mv-magnet{display:inline-block;transition:transform .3s cubic-bezier(.22,1,.36,1);will-change:transform;}
+
+/* ── Spotlight Hero (mriežka + kurzorové svetlo) ── */
+.hero-grid-bg{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(232,196,106,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(232,196,106,.055) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(ellipse at center, black 35%, transparent 78%);
+  mask-image:radial-gradient(ellipse at center, black 35%, transparent 78%);}
+.hero-spotlight{position:absolute;inset:0;z-index:1;pointer-events:none;transition:background .15s ease-out;}
+.hero-spot .fo-wrap,.hero-spot .hero-copy{position:relative;z-index:2;}
+
+/* ── Split-Text Reveal ── */
+.st-head .st-w{display:inline-block;overflow:hidden;vertical-align:top;margin-right:.26em;padding-bottom:.08em;}
+.st-head .st-wi{display:inline-block;transform:translateY(115%);
+  transition:transform .7s cubic-bezier(.22,1,.36,1);will-change:transform;}
+.st-head.st-in .st-wi{transform:translateY(0);}
+.center-split{text-align:center;}
+
+/* ── Parallax bloby ── */
+.plx-blob{position:absolute;border-radius:50%;filter:blur(72px);pointer-events:none;z-index:0;
+  transform:translateY(var(--plx,0));will-change:transform;}
+.sec>.wrap,.sec>.card-light{position:relative;z-index:1;}
 
 /* ── Card 3D Tilt ── */
 .mv-tilt{position:relative;transform-style:preserve-3d;will-change:transform;
@@ -788,13 +969,27 @@ const V2_CSS = `
   box-shadow:0 0 34px color-mix(in srgb,var(--accent) 26%, transparent), 0 18px 44px rgba(0,0,0,.45);}
 
 /* ── O nás: zakladateľ (tilt) ── */
-.v2-footer, .founder-card{}
 .mv-tilt.founder-card{border-radius:20px;border:1px solid var(--line);background:var(--bg2);
   box-shadow:0 24px 60px rgba(0,0,0,.5), 0 0 46px color-mix(in srgb,var(--accent) 9%, transparent);height:auto;}
 .mv-tilt.founder-card img{width:100%;display:block;}
 .mv-tilt.founder-card figcaption{padding:.95rem 1.15rem 1.05rem;display:flex;flex-direction:column;gap:.18rem;}
 .mv-tilt.founder-card b{font-size:1rem;}
 .mv-tilt.founder-card span{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-dim);}
+
+/* ── Video / dokumenty: sticky split ── */
+.video-split{display:grid;grid-template-columns:minmax(0,1fr) 460px;gap:3.2rem;align-items:start;}
+.video-side{position:sticky;top:110px;display:flex;flex-direction:column;gap:1.2rem;}
+.video-note{margin:0;padding-left:1.1rem;border-left:3px solid var(--accent);
+  font-size:.92rem;line-height:1.65;color:var(--fg-dim);}
+.video-cards{display:flex;flex-direction:column;gap:1.25rem;}
+.vc-item:nth-child(2){margin-left:28px;}
+.vc-item:nth-child(3){margin-left:56px;}
+.video-card{min-height:150px;}
+@media(max-width:960px){
+  .video-split{grid-template-columns:1fr;}
+  .video-side{position:static;}
+  .vc-item:nth-child(2),.vc-item:nth-child(3){margin-left:0;}
+}
 
 /* ── Prieskum: vyváženie stĺpcov ── */
 .research-side{justify-content:center;}
@@ -833,10 +1028,10 @@ const V2_CSS = `
 
 /* ── Coverflow 3D slider ── */
 .cf-outer{margin-top:1.6rem;}
-.cf-stage{position:relative;max-width:980px;margin:0 auto;
-  height:clamp(500px, 66vw, 620px);
-  perspective:1600px;display:flex;align-items:center;justify-content:center;}
-.cf-card{position:absolute;width:min(340px,70vw);border-radius:18px;overflow:hidden;
+.cf-stage{position:relative;max-width:1160px;margin:0 auto;
+  height:clamp(560px, 78vw, 760px);
+  perspective:1700px;display:flex;align-items:center;justify-content:center;}
+.cf-card{position:absolute;width:min(430px,78vw);border-radius:18px;overflow:hidden;
   background:var(--bg2);border:1px solid var(--line);
   box-shadow:0 30px 60px rgba(0,0,0,.55), 0 0 40px color-mix(in srgb,var(--accent) 10%, transparent);
   transition:transform .7s cubic-bezier(.4,0,.2,1),opacity .7s cubic-bezier(.4,0,.2,1),filter .7s cubic-bezier(.4,0,.2,1);
@@ -852,7 +1047,53 @@ const V2_CSS = `
   color:var(--fg);font-size:1.5rem;display:grid;place-items:center;transition:background .25s,color .25s,border-color .25s;}
 .cf-arrow:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
 .cf-outer .car-dots{margin-top:1.3rem;}
-@media(max-width:640px){.cf-arrow{width:42px;height:42px;}.cf-stage{height:clamp(430px,120vw,560px);}}
+@media(max-width:640px){.cf-arrow{width:42px;height:42px;}.cf-stage{height:clamp(470px,128vw,600px);}}
+
+/* ── O nás: upratený layout ── */
+.onas-grid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:3.4rem;align-items:start;}
+.onas-main{display:flex;flex-direction:column;}
+.onas-main .about-body p{max-width:none;}
+.onas-side{position:sticky;top:104px;display:flex;flex-direction:column;gap:1.15rem;}
+.side-quote{margin:0;padding:1.05rem 1.2rem;border-left:3px solid var(--accent);
+  background:color-mix(in srgb,var(--bg2) 82%, transparent);border-radius:0 14px 14px 0;
+  font-family:'Instrument Serif',serif;font-style:italic;font-size:1.08rem;line-height:1.5;color:var(--fg);}
+.side-tags{display:flex;flex-wrap:wrap;gap:.5rem;}
+.side-tags span{font-size:.64rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 42%, transparent);
+  padding:.32rem .72rem;border-radius:20px;transition:all .25s;}
+.side-tags span:hover{background:var(--accent);color:var(--accent-ink);}
+@media(max-width:960px){.onas-grid{grid-template-columns:1fr;}.onas-side{position:static;max-width:460px;}}
+
+/* ── Prieskum: dlaždice metód ── */
+.research-tiles{display:grid;grid-template-columns:1fr 1fr;gap:1.05rem;width:100%;}
+.rt{border:1px solid var(--line);border-radius:16px;padding:1.2rem 1.15rem;
+  background:color-mix(in srgb,var(--bg2) 78%, transparent);
+  display:flex;flex-direction:column;gap:.5rem;
+  transition:border-color .3s, transform .3s, box-shadow .3s;}
+.rt:hover{border-color:var(--accent);transform:translateY(-4px);
+  box-shadow:0 16px 36px rgba(0,0,0,.42), 0 0 22px color-mix(in srgb,var(--accent) 16%, transparent);}
+.rt svg{width:27px;height:27px;stroke:var(--accent);fill:none;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent) 45%, transparent));}
+.rt b{font-size:.95rem;letter-spacing:-.01em;}
+.rt span{font-size:.79rem;color:var(--fg-dim);line-height:1.5;}
+@media(max-width:520px){.research-tiles{grid-template-columns:1fr;}}
+
+/* ── CTA badge: FEHU logo v ohni ── */
+.badge-fire{position:relative;overflow:visible !important;}
+.badge-rune{position:relative;z-index:2;width:58%;height:auto;display:block;
+  animation:runeFire 2.4s ease-in-out infinite;}
+@keyframes runeFire{
+  0%,100%{filter:drop-shadow(0 0 8px rgba(244,214,120,.75)) drop-shadow(0 0 18px rgba(216,172,60,.45));transform:scale(1);}
+  50%{filter:drop-shadow(0 0 15px rgba(250,224,140,1)) drop-shadow(0 0 32px rgba(226,182,70,.75));transform:scale(1.05);}
+}
+.badge-flame{position:absolute;inset:-8px;border-radius:50%;z-index:1;pointer-events:none;
+  background:radial-gradient(circle at 50% 72%, rgba(242,206,100,.4), rgba(205,158,44,.16) 45%, transparent 65%);
+  animation:flameFlick 1.7s ease-in-out infinite alternate;}
+@keyframes flameFlick{
+  from{opacity:.55;transform:scale(.94) translateY(2px);}
+  to{opacity:1;transform:scale(1.07) translateY(-2px);}
+}
 
 /* ── Animated Tabs ── */
 .media-tabs-card{text-align:center;}
@@ -881,9 +1122,16 @@ const V2_CSS = `
   color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 45%, transparent);
   border-radius:20px;padding:.3rem .75rem;}
 
+/* ── Broadcast: split layout ── */
+.bc-split{display:grid;grid-template-columns:minmax(280px,430px) minmax(0,1fr);gap:3.2rem;align-items:start;}
+.bc-side{display:flex;flex-direction:column;gap:1.2rem;position:sticky;top:110px;}
+.bc-acc .mv-acc{margin:0;max-width:none;}
+@media(max-width:960px){.bc-split{grid-template-columns:1fr;}.bc-side{position:static;}}
+
 /* ── Accordion ── */
 .mv-acc{max-width:840px;margin:1rem auto 0;text-align:left;}
 .acc-item{border-bottom:1px solid var(--line);}
+.acc-item:first-child{border-top:1px solid var(--line);}
 .acc-head{display:flex;justify-content:space-between;align-items:center;gap:1rem;
   padding:1.25rem 0;cursor:pointer;font-weight:800;font-size:1.08rem;letter-spacing:-.01em;color:var(--fg);}
 .acc-head::after{content:"+";font-size:1.6rem;font-weight:300;color:var(--accent);
@@ -893,6 +1141,29 @@ const V2_CSS = `
 .acc-num{color:var(--accent);font-size:.8rem;font-weight:700;margin-right:.9rem;letter-spacing:.1em;}
 .acc-body{overflow:hidden;transition:max-height .4s cubic-bezier(.22,1,.36,1);}
 .acc-body p{margin:0 0 1.3rem;color:var(--fg-dim);line-height:1.75;font-size:.95rem;max-width:680px;}
+
+/* ── Timeline (Ako pracujeme) ── */
+.sec-timeline{background:linear-gradient(180deg, transparent, color-mix(in srgb,var(--bg2) 55%, transparent) 30%, transparent);}
+.tl-wrap{display:grid;grid-template-columns:minmax(280px,430px) minmax(0,1fr);gap:3.4rem;align-items:start;}
+.tl-side{display:flex;flex-direction:column;gap:1.2rem;position:sticky;top:110px;}
+.mv-timeline{position:relative;padding-left:2.6rem;}
+.mv-timeline__line{position:absolute;left:10px;top:6px;bottom:6px;width:2px;
+  background:color-mix(in srgb,var(--line) 130%, transparent);border-radius:2px;overflow:hidden;}
+.mv-timeline__fill{width:100%;height:0;border-radius:2px;
+  background:linear-gradient(var(--accent-2), var(--accent), #ffd27a);
+  box-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent);}
+.tl-item{position:relative;padding-bottom:2.5rem;opacity:0;transform:translateY(26px);
+  transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1);}
+.tl-item:last-child{padding-bottom:.4rem;}
+.tl-item::before{content:"";position:absolute;left:-2.6rem;top:.25rem;width:14px;height:14px;margin-left:4px;
+  border-radius:50%;background:var(--bg);border:3px solid var(--accent);transition:box-shadow .4s;}
+.tl-item.is-visible{opacity:1;transform:none;}
+.tl-item.is-visible::before{box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 20%, transparent),
+  0 0 16px color-mix(in srgb,var(--accent) 55%, transparent);}
+.tl-num{font-size:.68rem;font-weight:800;letter-spacing:.26em;color:var(--accent);}
+.tl-item h3{margin:.25rem 0 .45rem;font-size:1.25rem;font-weight:800;letter-spacing:-.01em;}
+.tl-item p{margin:0;color:var(--fg-dim);line-height:1.7;font-size:.95rem;max-width:520px;}
+@media(max-width:960px){.tl-wrap{grid-template-columns:1fr;}.tl-side{position:static;}}
 
 /* ── Kontakt: glass formulár ── */
 .v2-form{width:100%;max-width:620px;margin:0 auto;text-align:left;
@@ -930,7 +1201,8 @@ const V2_CSS = `
   letter-spacing:.02em;user-select:none;pointer-events:none;margin-top:1.5rem;
   color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--accent) 26%, transparent);
   background:linear-gradient(180deg, color-mix(in srgb,var(--accent) 14%, transparent), transparent 85%);
-  -webkit-background-clip:text;background-clip:text;}
+  -webkit-background-clip:text;background-clip:text;
+  transform:translateY(var(--plx,0));will-change:transform;}
 .scroll-top-holder{position:absolute;right:1.8rem;bottom:5.2rem;z-index:5;}
 .scroll-top{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);cursor:pointer;
   background:var(--bg2);color:var(--accent);font-size:1.25rem;display:grid;place-items:center;

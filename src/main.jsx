@@ -20,8 +20,8 @@ function Root() {
         style={{
           position: "fixed", bottom: 14, right: 14, zIndex: 999,
           padding: "9px 15px", borderRadius: 40,
-          border: "1px solid rgba(255,140,26,.45)",
-          background: "rgba(20,10,5,.88)", color: "#ffaa32",
+          border: "1px solid rgba(230,190,90,.5)",
+          background: "rgba(18,14,5,.88)", color: "#e6c266",
           fontSize: 12, fontWeight: 700, letterSpacing: ".04em",
           cursor: "pointer", backdropFilter: "blur(8px)",
           boxShadow: "0 8px 24px rgba(0,0,0,.5)",

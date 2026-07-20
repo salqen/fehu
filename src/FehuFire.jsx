@@ -259,7 +259,7 @@ const SIZE = 760;
 const CX = SIZE / 2, CY = SIZE / 2;
 const RADII = [102, 184, 264];
 const SPOKE_R = 258;
-const GOLD = "rgba(255,170,50,";
+const GOLD = "rgba(232,196,106,";
 
 export function FehuOrbital({ onNavigate }) {
   const wrapRef = useRef(null);
@@ -405,11 +405,11 @@ export function FehuOrbital({ onNavigate }) {
         p.life -= p.decay; p.size *= .975;
         if (p.life <= 0) { parts.splice(i, 1); continue; }
         const al = p.life * p.life;
-        const g = Math.min(220, Math.floor(120 + p.life * 110));
+        const g = Math.min(220, Math.floor(170 + p.life * 60));
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 2.4, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,${g},20,${al * 0.1})`; ctx.fill();
+        ctx.fillStyle = `rgba(255,${g},85,${al * 0.1})`; ctx.fill();
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,${g},30,${al * 0.9})`; ctx.fill();
+        ctx.fillStyle = `rgba(255,${g},95,${al * 0.9})`; ctx.fill();
       }
       raf = requestAnimationFrame(loop);
     }
@@ -425,9 +425,9 @@ export function FehuOrbital({ onNavigate }) {
       <style>{FO_CSS}</style>
 
       {/* parallax blobs */}
-      <div className="fo-blob" ref={(el)=>blobRefs.current[0]=el} style={{ width:320, height:320, top:"10%", left:"5%", background:"rgba(255,120,20,0.06)" }} />
-      <div className="fo-blob" ref={(el)=>blobRefs.current[1]=el} style={{ width:220, height:220, top:"60%", right:"8%", background:"rgba(255,80,10,0.05)" }} />
-      <div className="fo-blob" ref={(el)=>blobRefs.current[2]=el} style={{ width:160, height:160, top:"20%", right:"22%", background:"rgba(255,160,40,0.04)" }} />
+      <div className="fo-blob" ref={(el)=>blobRefs.current[0]=el} style={{ width:320, height:320, top:"10%", left:"5%", background:"rgba(216,172,60,0.06)" }} />
+      <div className="fo-blob" ref={(el)=>blobRefs.current[1]=el} style={{ width:220, height:220, top:"60%", right:"8%", background:"rgba(176,128,30,0.05)" }} />
+      <div className="fo-blob" ref={(el)=>blobRefs.current[2]=el} style={{ width:160, height:160, top:"20%", right:"22%", background:"rgba(230,184,76,0.04)" }} />
 
       <div className="fo-scene" ref={sceneRef}>
         {/* ohnivý canvas — obruče sa rozžiaria pri hover */}
@@ -476,7 +476,7 @@ const FO_CSS = `
   display:flex; align-items:center; justify-content:center;
   perspective:1000px;
   font-family:'Space Mono',monospace;
-  background:radial-gradient(ellipse 85% 75% at 50% 52%, #1a0d05 0%, #0a0503 68%);
+  background:radial-gradient(ellipse 85% 75% at 50% 52%, #171106 0%, #0a0804 68%);
 }
 .fo-blob{ position:absolute; border-radius:50%; pointer-events:none; will-change:transform; filter:blur(72px); }
 
@@ -490,20 +490,20 @@ const FO_CSS = `
 /* center */
 .fo-center{
   position:relative; z-index:10; width:30.75%; height:30.75%; border-radius:50%;
-  background:radial-gradient(circle at 35% 32%, #2a1608, #140a03);
-  border:1.5px solid rgba(255,170,50,.55);
+  background:radial-gradient(circle at 35% 32%, #231a08, #120d04);
+  border:1.5px solid rgba(232,196,106,.55);
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
   cursor:pointer; text-align:center;
-  box-shadow:0 0 0 6px rgba(255,140,20,.05), 0 0 50px rgba(255,120,0,.18), 0 0 90px rgba(255,80,0,.08),
-             0 24px 64px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,180,60,.18);
+  box-shadow:0 0 0 6px rgba(216,172,60,.05), 0 0 50px rgba(205,158,44,.18), 0 0 90px rgba(170,124,26,.08),
+             0 24px 64px rgba(0,0,0,.9), inset 0 1px 0 rgba(238,206,120,.18);
   transition:opacity .12s, transform .7s cubic-bezier(.34,1.56,.64,1), box-shadow .4s;
 }
 .fo-center:hover{
-  box-shadow:0 0 0 10px rgba(255,140,20,.08), 0 0 70px rgba(255,120,0,.32), 0 0 120px rgba(255,80,0,.12),
-             0 24px 64px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,180,60,.25);
+  box-shadow:0 0 0 10px rgba(216,172,60,.08), 0 0 70px rgba(205,158,44,.32), 0 0 120px rgba(170,124,26,.12),
+             0 24px 64px rgba(0,0,0,.9), inset 0 1px 0 rgba(238,206,120,.25);
 }
-.fo-rune{ width:190px; height:auto; filter:drop-shadow(0 0 12px rgba(255,150,0,.6)); display:block; transition:filter .35s; }
-.fo-rune.lit{ filter:drop-shadow(0 0 18px rgba(255,180,40,1)) drop-shadow(0 0 38px rgba(255,120,0,.7)) brightness(1.25); }
+.fo-rune{ width:190px; height:auto; filter:drop-shadow(0 0 12px rgba(226,178,58,.6)); display:block; transition:filter .35s; }
+.fo-rune.lit{ filter:drop-shadow(0 0 18px rgba(244,214,120,1)) drop-shadow(0 0 38px rgba(205,158,44,.7)) brightness(1.25); }
 .fo-rune-text{
   font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600;
   letter-spacing:1.5px;
@@ -513,35 +513,35 @@ const FO_CSS = `
 /* satellites */
 .fo-sat{
   position:absolute; width:20.5%; height:20.5%; border-radius:50%;
-  background:radial-gradient(circle at 35% 30%, #261607, #140a03);
-  border:1px solid rgba(255,160,40,.22);
+  background:radial-gradient(circle at 35% 30%, #201807, #120d04);
+  border:1px solid rgba(230,184,76,.22);
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
   cursor:pointer; z-index:6;
-  box-shadow:0 8px 32px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,180,60,.08);
+  box-shadow:0 8px 32px rgba(0,0,0,.7), inset 0 1px 0 rgba(238,206,120,.08);
   transition:opacity .12s, transform .5s cubic-bezier(.34,1.56,.64,1), border-color .35s, box-shadow .35s, background .35s;
 }
 .fo-sat:hover{
-  background:radial-gradient(circle at 35% 30%, #3a2410, #1c1004);
-  border-color:rgba(255,170,50,.7);
-  box-shadow:0 16px 48px rgba(0,0,0,.8), 0 0 26px rgba(255,130,0,.25), inset 0 1px 0 rgba(255,180,60,.2);
+  background:radial-gradient(circle at 35% 30%, #332708, #191204);
+  border-color:rgba(232,196,106,.7);
+  box-shadow:0 16px 48px rgba(0,0,0,.8), 0 0 26px rgba(210,164,50,.25), inset 0 1px 0 rgba(238,206,120,.2);
   transform:scale(1.05) translateZ(20px) !important; z-index:20;
 }
 .fo-sat-icon{
-  width:42px; height:42px; stroke:#ffaa32; stroke-width:1.4; fill:none;
+  width:42px; height:42px; stroke:#e6c266; stroke-width:1.4; fill:none;
   stroke-linecap:round; stroke-linejoin:round; transition:all .3s;
-  filter:drop-shadow(0 0 4px rgba(255,150,0,.35));
+  filter:drop-shadow(0 0 4px rgba(226,178,58,.35));
 }
-.fo-sat:hover .fo-sat-icon{ stroke:#ffe0a0; filter:drop-shadow(0 0 9px rgba(255,160,0,.7)); }
+.fo-sat:hover .fo-sat-icon{ stroke:#f2e0ac; filter:drop-shadow(0 0 9px rgba(232,190,70,.7)); }
 .fo-sat-label{
   font-size:.62rem; letter-spacing:.18em; text-transform:uppercase;
-  color:rgba(255,170,50,.42); transition:color .3s; white-space:nowrap;
+  color:rgba(232,196,106,.42); transition:color .3s; white-space:nowrap;
 }
 .fo-sat:hover .fo-sat-label{ color:rgba(255,224,160,.8); }
 
 .fo-bottom{
   position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
   font-size:.52rem; letter-spacing:.5em; text-transform:uppercase; white-space:nowrap;
-  color:rgba(255,170,50,.22);
+  color:rgba(232,196,106,.22);
 }
 
 @media (max-width:560px){
@@ -603,7 +603,7 @@ export default function FehuFire() {
     });
   }, [R, W, H]);
 
-  const accent = { r: 255, g: 150, b: 40 }; // #ff9628 ohnivá
+  const accent = { r: 232, g: 196, b: 106 }; // #ff9628 ohnivá
 
   const handleReveal = useCallback((idx) => {
     if (idx === -1) { setCenterVisible(true); return; }
@@ -1123,18 +1123,18 @@ export const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap');
 
 .fehu{
-  /* DARK FIRE (default) */
-  --bg:#0a0503;
-  --bg2:#140a05;
-  --fg:#fdf2e6;
-  --fg-dim:#b08868;
-  --accent:#ff8c1a;
-  --accent-2:#ff5722;
-  --accent-ink:#160a02;
-  --line:rgba(255,140,40,.12);
-  --card-light-bg:#1a0d05;
-  --card-light-fg:#fdf2e6;
-  --card-light-dim:#c08858;
+  /* DARK GOLD (default) — zlatá podľa FEHU loga */
+  --bg:#0a0804;
+  --bg2:#161006;
+  --fg:#f9f3e2;
+  --fg-dim:#b3a177;
+  --accent:#e0b84f;
+  --accent-2:#b8860b;
+  --accent-ink:#171003;
+  --line:rgba(224,184,79,.14);
+  --card-light-bg:#1a1408;
+  --card-light-fg:#f9f3e2;
+  --card-light-dim:#c2af80;
 
   background:var(--bg);
   color:var(--fg);
@@ -1145,17 +1145,17 @@ export const CSS = `
   -webkit-font-smoothing:antialiased;
 }
 .fehu.light{
-  --bg:#fdf6ef;
-  --bg2:#f6ebe0;
-  --fg:#2a1505;
-  --fg-dim:#8a6a4a;
-  --accent:#e05a10;
-  --accent-2:#c43c08;
+  --bg:#fbf6ea;
+  --bg2:#f4ecd8;
+  --fg:#2a2108;
+  --fg-dim:#8a7a4e;
+  --accent:#b8860b;
+  --accent-2:#96700a;
   --accent-ink:#fff;
-  --line:rgba(180,90,20,.16);
-  --card-light-bg:#1a0d05;
-  --card-light-fg:#fdf2e6;
-  --card-light-dim:#c08858;
+  --line:rgba(160,120,20,.18);
+  --card-light-bg:#1a1408;
+  --card-light-fg:#f9f3e2;
+  --card-light-dim:#c2af80;
 }
 
 .serif-it{ font-family:'Instrument Serif',serif; font-style:italic; font-weight:400; }
