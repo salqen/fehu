@@ -476,7 +476,7 @@ const FO_CSS = `
   display:flex; align-items:center; justify-content:center;
   perspective:1000px;
   font-family:'Space Mono',monospace;
-  background:radial-gradient(ellipse 85% 75% at 50% 52%, #171106 0%, #0a0804 68%);
+  background:radial-gradient(ellipse 85% 75% at 50% 52%, #1a0d05 0%, #0a0503 68%);
 }
 .fo-blob{ position:absolute; border-radius:50%; pointer-events:none; will-change:transform; filter:blur(72px); }
 
@@ -490,20 +490,20 @@ const FO_CSS = `
 /* center */
 .fo-center{
   position:relative; z-index:10; width:30.75%; height:30.75%; border-radius:50%;
-  background:radial-gradient(circle at 35% 32%, #231a08, #120d04);
-  border:1.5px solid rgba(232,196,106,.55);
+  background:radial-gradient(circle at 35% 32%, #2a1608, #140a03);
+  border:1.5px solid rgba(255,170,50,.55);
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
   cursor:pointer; text-align:center;
-  box-shadow:0 0 0 6px rgba(216,172,60,.05), 0 0 50px rgba(205,158,44,.18), 0 0 90px rgba(170,124,26,.08),
-             0 24px 64px rgba(0,0,0,.9), inset 0 1px 0 rgba(238,206,120,.18);
+  box-shadow:0 0 0 6px rgba(255,140,20,.05), 0 0 50px rgba(255,120,0,.18), 0 0 90px rgba(255,80,0,.08),
+             0 24px 64px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,180,60,.18);
   transition:opacity .12s, transform .7s cubic-bezier(.34,1.56,.64,1), box-shadow .4s;
 }
 .fo-center:hover{
-  box-shadow:0 0 0 10px rgba(216,172,60,.08), 0 0 70px rgba(205,158,44,.32), 0 0 120px rgba(170,124,26,.12),
-             0 24px 64px rgba(0,0,0,.9), inset 0 1px 0 rgba(238,206,120,.25);
+  box-shadow:0 0 0 10px rgba(255,140,20,.08), 0 0 70px rgba(255,120,0,.32), 0 0 120px rgba(255,80,0,.12),
+             0 24px 64px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,180,60,.25);
 }
-.fo-rune{ width:190px; height:auto; filter:drop-shadow(0 0 12px rgba(226,178,58,.6)); display:block; transition:filter .35s; }
-.fo-rune.lit{ filter:drop-shadow(0 0 18px rgba(244,214,120,1)) drop-shadow(0 0 38px rgba(205,158,44,.7)) brightness(1.25); }
+.fo-rune{ width:190px; height:auto; filter:drop-shadow(0 0 12px rgba(255,150,0,.6)); display:block; transition:filter .35s; }
+.fo-rune.lit{ filter:drop-shadow(0 0 18px rgba(255,180,40,1)) drop-shadow(0 0 38px rgba(255,120,0,.7)) brightness(1.25); }
 .fo-rune-text{
   font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600;
   letter-spacing:1.5px;
@@ -513,35 +513,35 @@ const FO_CSS = `
 /* satellites */
 .fo-sat{
   position:absolute; width:20.5%; height:20.5%; border-radius:50%;
-  background:radial-gradient(circle at 35% 30%, #201807, #120d04);
-  border:1px solid rgba(230,184,76,.22);
+  background:radial-gradient(circle at 35% 30%, #261607, #140a03);
+  border:1px solid rgba(255,160,40,.22);
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
   cursor:pointer; z-index:6;
-  box-shadow:0 8px 32px rgba(0,0,0,.7), inset 0 1px 0 rgba(238,206,120,.08);
+  box-shadow:0 8px 32px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,180,60,.08);
   transition:opacity .12s, transform .5s cubic-bezier(.34,1.56,.64,1), border-color .35s, box-shadow .35s, background .35s;
 }
 .fo-sat:hover{
-  background:radial-gradient(circle at 35% 30%, #332708, #191204);
-  border-color:rgba(232,196,106,.7);
-  box-shadow:0 16px 48px rgba(0,0,0,.8), 0 0 26px rgba(210,164,50,.25), inset 0 1px 0 rgba(238,206,120,.2);
+  background:radial-gradient(circle at 35% 30%, #3a2410, #1c1004);
+  border-color:rgba(255,170,50,.7);
+  box-shadow:0 16px 48px rgba(0,0,0,.8), 0 0 26px rgba(255,130,0,.25), inset 0 1px 0 rgba(255,180,60,.2);
   transform:scale(1.05) translateZ(20px) !important; z-index:20;
 }
 .fo-sat-icon{
-  width:42px; height:42px; stroke:#e6c266; stroke-width:1.4; fill:none;
+  width:42px; height:42px; stroke:#ffaa32; stroke-width:1.4; fill:none;
   stroke-linecap:round; stroke-linejoin:round; transition:all .3s;
-  filter:drop-shadow(0 0 4px rgba(226,178,58,.35));
+  filter:drop-shadow(0 0 4px rgba(255,150,0,.35));
 }
-.fo-sat:hover .fo-sat-icon{ stroke:#f2e0ac; filter:drop-shadow(0 0 9px rgba(232,190,70,.7)); }
+.fo-sat:hover .fo-sat-icon{ stroke:#ffe0a0; filter:drop-shadow(0 0 9px rgba(255,160,0,.7)); }
 .fo-sat-label{
   font-size:.62rem; letter-spacing:.18em; text-transform:uppercase;
-  color:rgba(232,196,106,.42); transition:color .3s; white-space:nowrap;
+  color:rgba(226,196,120,.55); transition:color .3s; white-space:nowrap;
 }
-.fo-sat:hover .fo-sat-label{ color:rgba(255,224,160,.8); }
+.fo-sat:hover .fo-sat-label{ color:rgba(244,222,160,.95); }
 
 .fo-bottom{
   position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
   font-size:.52rem; letter-spacing:.5em; text-transform:uppercase; white-space:nowrap;
-  color:rgba(232,196,106,.22);
+  color:rgba(226,196,120,.3);
 }
 
 @media (max-width:560px){
