@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { POSTERS, LOGO_EMBLEM, LOGO_FULL, MENU, FehuOrbital, CSS } from "./FehuFire.jsx";
+import { POSTERS, LOGO_EMBLEM, LOGO_FULL, MENU, FehuOrbital, CSS } from "./shared.jsx";
 
 /* ============================================================
    FEHU — VERZIA 2 · komponenty z COMPONENT SITE
@@ -485,6 +485,8 @@ const TIMELINE_ITEMS = [
   { n: "05", t: "Dlhodobé partnerstvo", d: "Rastieme spolu s vami — stratégiu priebežne rozvíjame podľa výsledkov a nových príležitostí." },
 ];
 
+const CONTACT_EMAIL = "office@fehuprosperity.eu";
+
 /* ============================================================ */
 export default function FehuFireV2() {
   const [dark, setDark] = useState(true);
@@ -499,6 +501,28 @@ export default function FehuFireV2() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
   const setRef = (id) => (el) => { sectionRefs.current[id] = el; };
+
+  /* kontaktný formulár — odoslanie cez mailto */
+  const submitContact = useCallback((e) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const subject = `Dopyt z webu — ${fd.get("typ") || "spolupráca"}`;
+    const body = [
+      `Meno: ${fd.get("meno") || ""}`,
+      `Kontakt: ${fd.get("kontakt") || ""}`,
+      `Typ spolupráce: ${fd.get("typ") || ""}`,
+      "",
+      fd.get("sprava") || "",
+    ].join("\n");
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }, []);
+
+  /* newsletter vo footeri — mailto */
+  const submitNewsletter = useCallback((e) => {
+    e.preventDefault();
+    const email = new FormData(e.currentTarget).get("email") || "";
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Prihlásenie k odberu noviniek")}&body=${encodeURIComponent(`Prosím o zaradenie do odberu noviniek: ${email}`)}`;
+  }, []);
 
   useParallax();
 
@@ -843,19 +867,19 @@ export default function FehuFireV2() {
         </h2>
         <p className="cta-sub rv" style={{transitionDelay:"180ms"}}>Bezplatná konzultácia do 48 hodín. Žiadne záväzky.</p>
 
-        <div className="v2-form rv" style={{transitionDelay:"260ms"}}>
+        <form className="v2-form rv" style={{transitionDelay:"260ms"}} onSubmit={submitContact}>
           <div className="v2-form-grid">
             <label className="v2-field">
               <span>Meno a priezvisko</span>
-              <input placeholder="Ján Novák" />
+              <input name="meno" required placeholder="Ján Novák" />
             </label>
             <label className="v2-field">
               <span>E-mail / telefón</span>
-              <input placeholder="jan@firma.sk" />
+              <input name="kontakt" required placeholder="jan@firma.sk" />
             </label>
             <label className="v2-field full">
               <span>Typ spolupráce</span>
-              <select defaultValue="">
+              <select name="typ" defaultValue="">
                 <option value="" disabled>Vyberte oblasť…</option>
                 <option>Video / dokumenty</option>
                 <option>Prieskum trhu</option>
@@ -867,13 +891,13 @@ export default function FehuFireV2() {
             </label>
             <label className="v2-field full">
               <span>Správa</span>
-              <textarea rows={4} placeholder="Povedzte nám o vašom projekte…" />
+              <textarea name="sprava" rows={4} placeholder="Povedzte nám o vašom projekte…" />
             </label>
           </div>
           <Magnetic>
-            <button className="cta-btn v2-submit">Odoslať dopyt <span className="arr">→</span></button>
+            <button type="submit" className="cta-btn v2-submit">Odoslať dopyt <span className="arr">→</span></button>
           </Magnetic>
-        </div>
+        </form>
 
         <div className="cta-trust rv" style={{transitionDelay:"340ms"}}>
           <span>🔒 Vaše dáta sú v bezpečí</span>
@@ -897,10 +921,10 @@ export default function FehuFireV2() {
           <div className="foot-brand rv" style={{transitionDelay:"60ms"}}>
             <div className="logo"><img className="logo-rune-img" src={LOGO_FULL} alt="FEHU Prosperity" /></div>
             <p className="foot-sign"><span className="serif-it">Prihláste sa</span> a využite silu FEHU.</p>
-            <div className="foot-form">
-              <input className="foot-input" placeholder="Váš e-mail" aria-label="E-mail" />
-              <button className="foot-submit" aria-label="Odoslať">→</button>
-            </div>
+            <form className="foot-form" onSubmit={submitNewsletter}>
+              <input className="foot-input" name="email" type="email" required placeholder="Váš e-mail" aria-label="E-mail" />
+              <button type="submit" className="foot-submit" aria-label="Odoslať">→</button>
+            </form>
           </div>
           <div className="foot-cols">
             <div className="foot-col rv" style={{transitionDelay:"140ms"}}>
@@ -916,7 +940,7 @@ export default function FehuFireV2() {
               <button onClick={()=>scrollTo("onas")}>O nás</button>
               <button onClick={()=>scrollTo("projekty")}>Projekty</button>
               <button onClick={()=>scrollTo("kontakt")}>Kontakt</button>
-              <button onClick={()=>window.open("mailto:office@fehuprosperity.eu")}>office@fehuprosperity.eu</button>
+              <button onClick={()=>{ window.location.href = `mailto:${CONTACT_EMAIL}`; }}>office@fehuprosperity.eu</button>
             </div>
           </div>
         </div>
