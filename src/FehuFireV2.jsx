@@ -219,6 +219,11 @@ function InteractiveRadar({ items, active, setActive, lit }) {
   }, [items.length, setActive]);
   const isLit = i => lit?.has(i);
 
+  /* zážih pri kliknutí — spark drží index + počítadlo, aby sa animácia
+     dala spustiť znova aj na tom istom vrchole */
+  const [spark, setSpark] = useState({ i: -1, n: 0 });
+  const ignite = i => { setActive(i); setSpark(s => ({ i, n: s.n + 1 })); };
+
   return (
     <div className="pillars">
       <div className="pillar-ring ir-ring"
@@ -247,10 +252,18 @@ function InteractiveRadar({ items, active, setActive, lit }) {
             const cx = 200 + Math.cos(a) * 160, cy = 200 + Math.sin(a) * 160;
             return (
               <g key={i} className="ir-node-g" style={{ cursor: "pointer" }}
-                onPointerEnter={() => setActive(i)} onClick={() => setActive(i)}>
+                onPointerEnter={() => setActive(i)} onClick={() => ignite(i)}>
                 <circle cx={cx} cy={cy} r="26" fill="transparent" />
                 {/* ohnivá aura po zapálení čiarou */}
                 {isLit(i) && <circle cx={cx} cy={cy} r="17" className="radar-ember" />}
+                {/* zážih pri kliknutí — rázová vlna + výšľah */}
+                {spark.i === i && (
+                  <g key={spark.n} className="radar-spark">
+                    <circle cx={cx} cy={cy} r="10" className="rs-wave" />
+                    <circle cx={cx} cy={cy} r="10" className="rs-wave rs-wave2" />
+                    <circle cx={cx} cy={cy} r="14" className="rs-core" />
+                  </g>
+                )}
                 <circle cx={cx} cy={cy} r={active === i ? 13 : 9}
                   className={`radar-node ${active === i ? "on" : ""} ${isLit(i) ? "lit" : ""}`}/>
               </g>
@@ -477,6 +490,68 @@ function FlameDot({ active, size = 72 }) {
   return <canvas ref={ref} width={size} height={size} />;
 }
 
+/* ---- Karta dokumentu — flip + 3D hĺbka na odvrátenej strane ---- */
+function DocCard({ p, delay, onPlay }) {
+  const [src, setSrc] = useState(p.thumb);
+  const fallback = p.ytid ? `https://i.ytimg.com/vi/${p.ytid}/hqdefault.jpg` : null;
+  return (
+    <div className="doc rv-scale" style={{ transitionDelay: `${delay}ms` }}>
+      <div className="doc-inner">
+        <div className="doc-front">
+          <span className="doc-thumb" aria-hidden="true">
+            {src && <img src={src} alt="" loading="lazy" decoding="async"
+              onError={() => setSrc(s => (s !== fallback ? fallback : null))} />}
+          </span>
+          <span className="doc-num">{p.n}</span>
+          <div className="doc-front-txt">
+            <h4>{p.t}</h4>
+            <span className="doc-meta">{p.meta}</span>
+          </div>
+          <span className="doc-play" aria-hidden="true">▶</span>
+        </div>
+
+        <div className="doc-back">
+          <div className="doc-back-d1"><h4>{p.t}</h4></div>
+          <div className="doc-back-d2"><p>{p.d}</p></div>
+          <div className="doc-back-d3">
+            <button type="button" className="doc-btn" onClick={() => onPlay(p)}>
+              Prehrať <span className="arr">▶</span>
+            </button>
+            <a className="doc-link" href={docWatch(p)} target="_blank" rel="noreferrer"
+              onClick={e => e.stopPropagation()}>YouTube ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- Vyskakovací prehrávač ---- */
+function VideoModal({ item, onClose }) {
+  useEffect(() => {
+    if (!item) return;
+    const onKey = e => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [item, onClose]);
+  if (!item) return null;
+  return (
+    <div className="vm-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label={item.t}>
+      <div className="vm-box" onClick={e => e.stopPropagation()}>
+        <div className="vm-head">
+          <b>{item.t}</b>
+          <button className="vm-close" onClick={onClose} aria-label="Zavrieť">✕</button>
+        </div>
+        <div className="vm-frame">
+          <iframe src={docEmbed(item)} title={item.t} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---- Rozkliknuteľný text (prvý odstavec vidno, zvyšok sa rozbalí) ---- */
 function ReadMore({ children, className = "", style, more = "Čítať viac", less = "Zbaliť" }) {
   const [open, setOpen] = useState(false);
@@ -588,11 +663,30 @@ function Timeline({ items, fire = false, onItemEnter, onLit }) {
 }
 
 /* ---- dáta ---- */
+/* Dokumenty — náhľad + vyskakovací prehrávač.
+   thumb = lokálny WebP, ytid = záskok na náhľad priamo z YouTube. */
 const DOC_CARDS = [
-  { n: "01", t: "Tvrdá cesta Kubou", d: "Trojdielny dokumentárny seriál pre TV Markíza a platformu VOYO — autentický pohľad na tréningový camp, profesionálnych športovcov a život domácich Kubáncov." },
-  { n: "02", t: "10 rokov Hip Hop Žije", d: "Jubilejný dokument mapujúci desaťročnú históriu najväčšieho hip-hopového festivalu na Slovensku — jeho vývoj, atmosféru a ľudí, ktorí stáli za jeho úspechom." },
-  { n: "03", t: "Portréty bojovníkov", d: "Profilové príbehy osobností zo sveta bojových športov — Sebastian Fapšo, Leo Brichta a ďalší profesionálni bojovníci. Kariéra, životná cesta, úspechy aj hodnoty, ktoré reprezentujú." },
+  { n: "01", t: "Tvrdá cesta Kubou",
+    d: "Trojdielny dokumentárny seriál pre TV Markíza a platformu VOYO — autentický pohľad na tréningový camp, profesionálnych športovcov a život domácich Kubáncov.",
+    thumb: "/docs/kuba.webp",
+    list: "PL2Du0An7GKjxLHY8lVzBtO6P8o-eWQ62U", meta: "3 časti · seriál" },
+  { n: "02", t: "10 rokov Hip Hop Žije",
+    d: "Jubilejný dokument mapujúci desaťročnú históriu najväčšieho hip-hopového festivalu na Slovensku — jeho vývoj, atmosféru a ľudí, ktorí stáli za jeho úspechom.",
+    thumb: "/docs/hiphopzije.webp", ytid: "aH_mgBPZNzw",
+    video: "aH_mgBPZNzw", meta: "celovečerný dokument" },
+  { n: "03", t: "Portréty bojovníkov",
+    d: "Profilové príbehy osobností zo sveta bojových športov — Sebastian Fapšo, Leo Brichta a ďalší profesionálni bojovníci. Kariéra, životná cesta, úspechy aj hodnoty, ktoré reprezentujú.",
+    thumb: "/docs/portrety.webp", ytid: "Wix72-AXKOc",
+    list: "PL2Du0An7GKjzQGwop91v9t99MNmijeROv", meta: "séria portrétov" },
 ];
+
+/* URL do vyskakovacieho prehrávača (bez cookies, autoplay po kliknutí) */
+const docEmbed = (p) => p.list
+  ? `https://www.youtube-nocookie.com/embed/videoseries?list=${p.list}&autoplay=1&rel=0`
+  : `https://www.youtube-nocookie.com/embed/${p.video}?autoplay=1&rel=0`;
+const docWatch = (p) => p.list
+  ? `https://www.youtube.com/playlist?list=${p.list}`
+  : `https://www.youtube.com/watch?v=${p.video}`;
 
 const PILLARS = [
   { n: "01", t: "Business Strategy", d: "Analyzujeme váš biznis, trh a konkurenciu. Nastavujeme obchodné a rastové stratégie s jasnou víziou a merateľnými cieľmi." },
@@ -603,8 +697,8 @@ const PILLARS = [
 ];
 
 const PROJECTS = [
-  { t: "RFA – Real Fight Arena", cat: "Šport · Eventy · Broadcast", d: "Kompletná vizuálna identita, promo kampane, event branding, video produkcia a broadcast pre najväčšiu MMA organizáciu na Slovensku.", bg: "/clients/rfa-bg.webp" },
-  { t: "Hip Hop Žije Festival", cat: "Hudba · Festival", d: "Najväčší hip-hopový festival na Slovensku — marketing, médiá a jubilejný dokument 10 rokov Hip Hop Žije.", bg: "/clients/hhz-bg.webp" },
+  { t: "RFA – Real Fight Arena", cat: "Šport · Eventy · Broadcast", d: "Kompletná vizuálna identita, promo kampane, event branding, video produkcia a broadcast pre najväčšiu MMA organizáciu na Slovensku.", url: "https://rfa.live", bg: "/clients/rfa-bg.webp" },
+  { t: "Hip Hop Žije Festival", cat: "Hudba · Festival", d: "Najväčší hip-hopový festival na Slovensku — marketing, médiá a jubilejný dokument 10 rokov Hip Hop Žije.", url: "https://hiphopzije.sk", bg: "/clients/hhz-bg.webp" },
   { t: "XBIO", cat: "E-commerce · Brand", d: "Budovanie značky a výkonnostný marketing pre e-shop so zdravou výživou, CBD olejmi a doplnkami.", url: "https://www.xbio.sk", bg: "/clients/xbio-bg.webp" },
   { t: "ThaiSpot", cat: "Wellness · Marketing", d: "Marketing a budovanie značky pre tradičné thajské masáže a wellness v centre Bratislavy.", url: "https://www.thaispot.sk", bg: "/clients/thaispot-bg.webp" },
   { t: "Alchymista Bar", cat: "Gastro · Eventy", d: "Branding, eventy a profesionálny bar catering v spolupráci so skúseným tímom.", url: "https://www.alchymista.pub", bg: "/clients/alchymista-bg.webp" },
@@ -654,6 +748,8 @@ export default function FehuFireV2() {
   const [activePillar, setActivePillar] = useState(0);
   /* vrcholy pentagonu zapálené ohnivou čiarou v timeline */
   const [litPillars, setLitPillars] = useState(() => new Set());
+  /* dokument otvorený vo vyskakovacom prehrávači */
+  const [playing, setPlaying] = useState(null);
   const sectionRefs = useRef({});
 
   const scrollTo = useCallback((id) => {
@@ -769,18 +865,18 @@ export default function FehuFireV2() {
               marketingu, manažmentu, budovania značiek, prieskumu trhu, tvorby video obsahu
               a profesionálnej prípravy dokumentov.
             </p>
-            {/* prvý odstavec zostáva viditeľný — text tak siaha po koniec fotky */}
+            {/* viditeľné zostávajú prvé dva odstavce, rozbaľuje sa až od „Našim klientom…“ */}
             <div className="about-body rv" style={{transitionDelay:"200ms", maxWidth:"none"}}>
               <p>Veríme, že úspešná značka nevzniká náhodou. Je výsledkom jasnej vízie, premyslenej stratégie,
               kvalitnej komunikácie a dôslednej realizácie. Preto ku každému projektu pristupujeme individuálne
               a navrhujeme riešenia, ktoré prinášajú reálne výsledky a dlhodobú hodnotu.</p>
-            </div>
-            <ReadMore className="rv" style={{transitionDelay:"260ms"}}>
-            <div className="about-body" style={{maxWidth:"none"}}>
               <p>Za spoločnosťou stojí podnikateľ <b>Boris Marhanský</b>, ktorý počas svojej podnikateľskej kariéry
               vybudoval a rozvíjal viaceré úspešné projekty. Jeho skúsenosti z oblasti podnikania, marketingu,
               manažmentu a budovania značiek tvoria základ filozofie Fehu Prosperity – byť partnerom, ktorý
               nielen radí, ale aktívne pomáha meniť vízie na úspešné projekty.</p>
+            </div>
+            <ReadMore className="rv" style={{transitionDelay:"260ms"}}>
+            <div className="about-body" style={{maxWidth:"none"}}>
               <p>Našim klientom pomáhame vytvárať silnú identitu značky, nastavovať efektívne obchodné
               a marketingové stratégie, analyzovať trh a identifikovať nové príležitosti na rast. Zároveň
               zabezpečujeme tvorbu profesionálnych videí, reklamných kampaní, prezentačných materiálov
@@ -848,13 +944,7 @@ export default function FehuFireV2() {
           </div>
           <div className="video-cards">
             {DOC_CARDS.map((p,i)=>(
-              <div className="rv-scale tilt-holder vc-item" style={{transitionDelay:`${i*120}ms`}} key={i}>
-                <Tilt className="pillar-card video-card">
-                  <span className="pc-num">{p.n}</span>
-                  <h4 className="pc-title">{p.t}</h4>
-                  <p className="pc-desc">{p.d}</p>
-                </Tilt>
-              </div>
+              <DocCard p={p} delay={i*120} onPlay={setPlaying} key={i} />
             ))}
           </div>
         </div>
@@ -1115,6 +1205,7 @@ export default function FehuFireV2() {
 
       <ScrollTopFab onClick={() => scrollTo("top")} />
 
+      <VideoModal item={playing} onClose={() => setPlaying(null)} />
       <CookieConsent openSettingsSignal={ckSignal} onOpenPolicy={openLegal} />
       <LegalModal open={legal.open} tab={legal.tab}
         onTab={t => setLegal(l => ({ ...l, tab: t }))}
@@ -1219,6 +1310,58 @@ const V2_CSS = `
 @media(max-width:900px){.nav-cta{font-size:0;padding:.55rem 1.1rem;}
   .nav-cta::after{content:"Mám záujem";font-size:.72rem;}}
 
+/* ══ OHNIVÝ ZÁŽIH TLAČIDIEL PRI HOVERI ══
+   ::before = plameň šľahajúci zdola, ::after = presvit prechádzajúci cez tlačidlo */
+.hero-btn,.cta-btn,.nav-cta,.rm-btn,.v2-submit,.foot-submit{
+  position:relative;overflow:hidden;isolation:isolate;
+  transition:transform .25s cubic-bezier(.22,1,.36,1), box-shadow .35s ease,
+    color .25s ease, background .3s ease, border-color .25s ease;}
+/* pseudo-elementy idú pod text (z-index:-1), inak by prekryli aj holé
+   textové uzly, ktoré sa selektorom >* zachytiť nedajú */
+.hero-btn::before,.cta-btn::before,.nav-cta::before,
+.rm-btn::before,.v2-submit::before,.foot-submit::before{
+  content:"";position:absolute;left:50%;bottom:-58%;z-index:-1;
+  width:132%;height:132%;transform:translateX(-50%) scaleY(.3);
+  border-radius:50%;opacity:0;pointer-events:none;filter:blur(9px);
+  background:radial-gradient(ellipse at 50% 82%,
+    rgba(255,226,150,.95) 0%, rgba(255,168,44,.8) 26%,
+    rgba(255,94,10,.5) 52%, transparent 74%);
+  transition:opacity .3s ease;}
+.hero-btn:hover::before,.cta-btn:hover::before,.nav-cta:hover::before,
+.rm-btn:hover::before,.v2-submit:hover::before,.foot-submit:hover::before,
+.hero-btn:focus-visible::before,.cta-btn:focus-visible::before,
+.rm-btn:focus-visible::before,.v2-submit:focus-visible::before{
+  opacity:1;animation:btnFlame 1.5s ease-in-out infinite alternate;}
+
+.hero-btn::after,.cta-btn::after,.nav-cta::after,
+.rm-btn::after,.v2-submit::after,.foot-submit::after{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  border-radius:inherit;opacity:0;
+  background:linear-gradient(105deg, transparent 32%,
+    rgba(255,235,180,.55) 50%, transparent 68%);
+  transform:translateX(-120%);}
+.hero-btn:hover::after,.cta-btn:hover::after,.nav-cta:hover::after,
+.rm-btn:hover::after,.v2-submit:hover::after,.foot-submit:hover::after{
+  opacity:1;animation:btnSweep .82s cubic-bezier(.3,.8,.4,1) forwards;}
+
+.hero-btn:hover,.cta-btn:hover,.nav-cta:hover,.v2-submit:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 30px rgba(255,140,20,.42), 0 0 46px rgba(255,110,10,.28);}
+
+@keyframes btnFlame{
+  0%{transform:translateX(-50%) scaleY(.3) scaleX(1);filter:blur(9px);}
+  35%{transform:translateX(-51%) scaleY(.42) scaleX(1.05);filter:blur(11px);}
+  70%{transform:translateX(-49%) scaleY(.34) scaleX(.97);filter:blur(8px);}
+  100%{transform:translateX(-50%) scaleY(.46) scaleX(1.03);filter:blur(12px);}
+}
+@keyframes btnSweep{ to{ transform:translateX(120%); } }
+@media(prefers-reduced-motion:reduce){
+  .hero-btn::before,.cta-btn::before,.nav-cta::before,
+  .rm-btn::before,.v2-submit::before,.foot-submit::before,
+  .hero-btn::after,.cta-btn::after,.nav-cta::after,
+  .rm-btn::after,.v2-submit::after,.foot-submit::after{animation:none;}
+}
+
 /* ── Rozkliknuteľný text (Čítať viac) ── */
 .rm{width:100%;}
 .rm-body{overflow:hidden;max-height:0;
@@ -1271,8 +1414,27 @@ const V2_CSS = `
   0%,100%{opacity:.6;transform:scale(1);filter:drop-shadow(0 0 6px rgba(255,150,40,.5));}
   50%{opacity:1;transform:scale(1.12);filter:drop-shadow(0 0 14px rgba(255,170,50,.85));}
 }
+/* ── zážih vrcholu pri kliknutí ── */
+.radar-spark{pointer-events:none;transform-box:fill-box;transform-origin:center;}
+.rs-wave{fill:none;stroke:rgba(255,190,90,.9);stroke-width:2;
+  transform-box:fill-box;transform-origin:center;
+  animation:rsWave .72s cubic-bezier(.16,.9,.3,1) forwards;}
+.rs-wave2{stroke:rgba(255,120,20,.6);animation-delay:.1s;animation-duration:.86s;}
+.rs-core{fill:rgba(255,215,130,.85);transform-box:fill-box;transform-origin:center;
+  animation:rsCore .6s cubic-bezier(.22,1,.36,1) forwards;}
+@keyframes rsWave{
+  0%{opacity:1;transform:scale(.35);stroke-width:3.5;}
+  100%{opacity:0;transform:scale(3.1);stroke-width:.4;}
+}
+@keyframes rsCore{
+  0%{opacity:0;transform:scale(.2);}
+  28%{opacity:1;transform:scale(1.5);
+    filter:drop-shadow(0 0 16px rgba(255,190,70,1)) drop-shadow(0 0 34px rgba(255,120,10,.9));}
+  100%{opacity:0;transform:scale(.75);}
+}
 @media(prefers-reduced-motion:reduce){
   .ir-ring .radar-ember{animation:none;opacity:.8;}
+  .radar-spark{display:none;}
 }
 .ir-ring .radar-l{transition:stroke .3s, opacity .3s;}
 .ir-ring .radar-l.on{stroke:var(--accent);opacity:1;
@@ -1307,15 +1469,92 @@ const V2_CSS = `
 .video-note{margin:0;padding-left:1.1rem;border-left:3px solid var(--accent);
   font-size:.92rem;line-height:1.65;color:var(--fg-dim);}
 /* všetky karty rovnako široké aj vysoké — bez schodovitého odsadenia */
+/* ── Karty dokumentov: flip + 3D hĺbka po otočení ── */
 .video-cards{display:grid;grid-auto-rows:1fr;gap:1.25rem;}
-.vc-item{margin-left:0;display:flex;}
-.vc-item .mv-tilt{width:100%;}
-.video-card{height:100%;min-height:172px;display:flex;flex-direction:column;}
-.video-card .pc-desc{margin-top:auto;}
+.doc{perspective:1400px;min-height:186px;}
+.doc-inner{position:relative;width:100%;height:100%;min-height:186px;
+  transform-style:preserve-3d;transition:transform .8s cubic-bezier(.22,1,.36,1);}
+.doc:hover .doc-inner,.doc:focus-within .doc-inner{transform:rotateY(180deg);}
+.doc-front,.doc-back{position:absolute;inset:0;border-radius:18px;overflow:hidden;
+  border:1px solid var(--line);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  transform-style:preserve-3d;}
+
+/* predná strana — náhľad z dokumentu */
+.doc-front{background:var(--bg2);display:flex;flex-direction:column;justify-content:flex-end;
+  padding:1.15rem 1.25rem;}
+.doc-thumb{position:absolute;inset:0;z-index:0;}
+.doc-thumb img{width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform 1s cubic-bezier(.22,1,.36,1);}
+.doc:hover .doc-thumb img{transform:scale(1.05);}
+.doc-front::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg, rgba(8,6,3,.28) 0%, rgba(8,6,3,.72) 58%, rgba(8,6,3,.94) 100%);}
+.doc-num{position:absolute;top:.95rem;left:1.25rem;z-index:2;
+  font-size:.66rem;font-weight:800;letter-spacing:.26em;color:var(--accent);
+  text-shadow:0 2px 8px rgba(0,0,0,.7);}
+.doc-front-txt{position:relative;z-index:2;}
+.doc-front-txt h4{margin:0 0 .22rem;font-size:1.08rem;font-weight:800;letter-spacing:-.01em;
+  color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.65);}
+.doc-meta{font-size:.63rem;font-weight:700;letter-spacing:.17em;text-transform:uppercase;
+  color:rgba(255,255,255,.72);}
+.doc-play{position:absolute;top:50%;left:50%;z-index:2;transform:translate(-50%,-50%);
+  width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:.9rem;
+  color:#1a1206;background:linear-gradient(120deg,var(--accent-2),var(--accent) 55%,#ffd27a);
+  box-shadow:0 6px 22px rgba(0,0,0,.5), 0 0 26px color-mix(in srgb,var(--accent) 45%, transparent);
+  transition:transform .4s cubic-bezier(.22,1,.36,1);}
+.doc:hover .doc-play{transform:translate(-50%,-50%) scale(1.14);}
+
+/* odvrátená strana — obsah vystúpi do priestoru (skutočné 3D po otočení) */
+.doc-back{transform:rotateY(180deg);display:flex;flex-direction:column;gap:.7rem;
+  justify-content:center;padding:1.35rem 1.4rem;
+  background:linear-gradient(150deg, color-mix(in srgb,var(--accent-2) 24%, var(--bg2)), var(--bg2) 72%);
+  border-color:color-mix(in srgb,var(--accent) 42%, transparent);}
+.doc-back::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px circle at 78% 12%,
+    color-mix(in srgb,var(--accent) 20%, transparent), transparent 62%);}
+.doc-back-d1,.doc-back-d2,.doc-back-d3{position:relative;transform:translateZ(0);
+  transition:transform .8s cubic-bezier(.22,1,.36,1);}
+.doc:hover .doc-back-d1{transform:translateZ(42px);}
+.doc:hover .doc-back-d2{transform:translateZ(26px);}
+.doc:hover .doc-back-d3{transform:translateZ(58px);}
+.doc-back h4{margin:0;font-size:1.02rem;font-weight:800;color:var(--fg);}
+.doc-back p{margin:0;font-size:.83rem;line-height:1.6;color:var(--fg-dim);}
+.doc-back-d3{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;}
+.doc-btn{display:inline-flex;align-items:center;gap:.45rem;cursor:pointer;font-family:inherit;
+  padding:.55rem 1.15rem;border-radius:999px;border:1px solid transparent;
+  font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#1a1206;
+  background:linear-gradient(120deg,var(--accent-2),var(--accent) 55%,#ffd27a);
+  box-shadow:0 6px 20px color-mix(in srgb,var(--accent) 34%, transparent);
+  transition:transform .25s cubic-bezier(.22,1,.36,1), box-shadow .3s;}
+.doc-btn:hover{transform:translateY(-2px);
+  box-shadow:0 10px 28px rgba(255,140,20,.5), 0 0 40px rgba(255,110,10,.3);}
+.doc-link{font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--accent);
+  text-decoration:none;transition:color .2s;}
+.doc-link:hover{color:var(--accent-2);text-decoration:underline;}
 @media(max-width:960px){
   .video-split{grid-template-columns:1fr;}
   .video-side{position:static;}
 }
+@media(prefers-reduced-motion:reduce){
+  .doc-inner{transition:none;}
+  .doc-back-d1,.doc-back-d2,.doc-back-d3{transition:none;}
+}
+
+/* ── Vyskakovací prehrávač ── */
+.vm-overlay{position:fixed;inset:0;z-index:1400;display:flex;align-items:center;justify-content:center;
+  padding:clamp(.8rem,3vw,2rem);background:rgba(0,0,0,.82);backdrop-filter:blur(8px);
+  animation:lgIn .28s ease both;}
+.vm-box{width:min(1080px,100%);border-radius:18px;overflow:hidden;background:#0b0803;
+  border:1px solid color-mix(in srgb,var(--accent) 28%, transparent);
+  box-shadow:0 34px 90px rgba(0,0,0,.65);
+  animation:lgPop .45s cubic-bezier(.22,1,.36,1) both;}
+.vm-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:.85rem 1.1rem;border-bottom:1px solid color-mix(in srgb,var(--accent) 18%, transparent);}
+.vm-head b{font-size:.9rem;font-weight:800;color:#f7efdd;}
+.vm-close{width:34px;height:34px;border-radius:50%;flex:none;cursor:pointer;font-size:.85rem;
+  color:#cbbb92;background:transparent;border:1px solid rgba(255,255,255,.18);transition:all .25s;}
+.vm-close:hover{color:#fff;border-color:var(--accent);transform:rotate(90deg);}
+.vm-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;}
+.vm-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;}
 
 /* ── Prieskum: vyváženie stĺpcov ── */
 .research-side{justify-content:center;}
@@ -1358,6 +1597,22 @@ const V2_CSS = `
   width:auto;height:auto;object-fit:contain;object-position:left center;opacity:.95;
   filter:drop-shadow(0 2px 10px rgba(0,0,0,.45));transition:opacity .3s;}
 .flip:hover .flip-logo{opacity:1;}
+/* svetelný nádych + hĺbka po otočení — rovnaký rukopis ako karty dokumentov */
+.flip{perspective:1400px;}
+.flip-inner,.flip-front,.flip-back{transform-style:preserve-3d;}
+.flip-back::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px circle at 78% 12%,
+    color-mix(in srgb,var(--accent) 20%, transparent), transparent 62%);}
+.flip-back>*{position:relative;transition:transform .75s cubic-bezier(.22,1,.36,1);}
+.flip:hover .flip-back>h3{transform:translateZ(40px);}
+.flip:hover .flip-back>p{transform:translateZ(24px);}
+.flip:hover .flip-back>a{transform:translateZ(54px);}
+.flip-front::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  opacity:0;border-radius:inherit;transition:opacity .45s ease;
+  background:linear-gradient(115deg, transparent 38%,
+    rgba(255,235,180,.16) 50%, transparent 62%);}
+.flip:hover .flip-front::before{opacity:1;}
+
 .flip-back{transform:rotateY(180deg);justify-content:center;gap:.5rem;
   background:linear-gradient(150deg, color-mix(in srgb,var(--accent-2) 26%, var(--bg2)), var(--bg2) 70%);
   border-color:color-mix(in srgb,var(--accent) 45%, transparent);}
