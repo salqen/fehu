@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { POSTERS, LOGO_EMBLEM, LOGO_FULL, MENU, NAV_LEFT, NAV_RIGHT, FehuOrbital, CSS } from "./shared.jsx";
+import { POSTERS, LOGO_EMBLEM, LOGO_FULL, MENU, FehuOrbital, CSS } from "./shared.jsx";
 import { CookieConsent, LegalModal, LEGAL_CSS } from "./legal.jsx";
 
 /* ============================================================
@@ -207,9 +207,8 @@ const Blob = ({ style, speed = "0.12" }) => (
   <div className="plx-blob" data-plx={speed} style={style} aria-hidden="true" />
 );
 
-/* ---- Interaktívny radar 5 pilierov ----
-   lit = vrcholy, ktoré už zapálila ohnivá čiara v timeline vľavo ---- */
-function InteractiveRadar({ items, active, setActive, lit }) {
+/* ---- Interaktívny radar 5 pilierov ---- */
+function InteractiveRadar({ items, active, setActive }) {
   const locked = useRef(false);
   useEffect(() => {
     const t = setInterval(() => {
@@ -217,7 +216,6 @@ function InteractiveRadar({ items, active, setActive, lit }) {
     }, 2600);
     return () => clearInterval(t);
   }, [items.length, setActive]);
-  const isLit = i => lit?.has(i);
 
   return (
     <div className="pillars">
@@ -228,7 +226,7 @@ function InteractiveRadar({ items, active, setActive, lit }) {
           <circle cx="200" cy="200" r="160" className="radar-c"/>
           <circle cx="200" cy="200" r="110" className="radar-c"/>
           <circle cx="200" cy="200" r="60" className="radar-c"/>
-          {/* pentagon — dva obvody cez 5 pilierov (bez vnútornej hviezdy) */}
+          {/* pentagram — obvod + vnútorná hviezda cez 5 pilierov */}
           {[160, 110].map((r, ri) => (
             <polygon key={`pg${ri}`} className="radar-pent"
               points={items.map((_, i) => {
@@ -236,11 +234,16 @@ function InteractiveRadar({ items, active, setActive, lit }) {
                 return `${200 + Math.cos(a) * r},${200 + Math.sin(a) * r}`;
               }).join(" ")} />
           ))}
+          <polygon className="radar-star"
+            points={items.map((_, i) => {
+              const a = (-90 + ((i * 2) % items.length) * (360 / items.length)) * Math.PI / 180;
+              return `${200 + Math.cos(a) * 160},${200 + Math.sin(a) * 160}`;
+            }).join(" ")} />
           {items.map((_, i) => {
             const a = (-90 + i * 72) * Math.PI / 180;
             return <line key={i} x1="200" y1="200"
               x2={200 + Math.cos(a) * 160} y2={200 + Math.sin(a) * 160}
-              className={`radar-l ${active === i ? "on" : ""} ${isLit(i) ? "lit" : ""}`}/>;
+              className={`radar-l ${active === i ? "on" : ""}`}/>;
           })}
           {items.map((_, i) => {
             const a = (-90 + i * 72) * Math.PI / 180;
@@ -249,10 +252,8 @@ function InteractiveRadar({ items, active, setActive, lit }) {
               <g key={i} className="ir-node-g" style={{ cursor: "pointer" }}
                 onPointerEnter={() => setActive(i)} onClick={() => setActive(i)}>
                 <circle cx={cx} cy={cy} r="26" fill="transparent" />
-                {/* ohnivá aura po zapálení čiarou */}
-                {isLit(i) && <circle cx={cx} cy={cy} r="17" className="radar-ember" />}
                 <circle cx={cx} cy={cy} r={active === i ? 13 : 9}
-                  className={`radar-node ${active === i ? "on" : ""} ${isLit(i) ? "lit" : ""}`}/>
+                  className={`radar-node ${active === i ? "on" : ""}`}/>
               </g>
             );
           })}
@@ -504,50 +505,22 @@ function ReadMore({ children, className = "", style, more = "Čítať viac", les
   );
 }
 
-/* ---- Timeline (component site: timeline) ----
-   Gulička sa zapáli presne vo chvíli, keď k nej dorastie ohnivá čiara.
-<<<<<<< HEAD
-   Cez onLit sa tá istá udalosť prenáša aj na pentagon.
-   Pozor: obe triedy (is-visible aj is-lit) drží React v stave —
-   pridávať ich imperatívne cez classList sa nesmie, prekreslenie ich zmaže. ---- */
-function Timeline({ items, fire = false, onItemEnter, onLit }) {
-  const ref = useRef(null);
-  const fillRef = useRef(null);
-  const [seen, setSeen] = useState(() => new Set());
-  const [lit, setLit] = useState(() => new Set());
-  const litRef = useRef(lit);
-=======
-   Cez onLit sa tá istá udalosť prenáša aj na pentagon. ---- */
-function Timeline({ items, fire = false, onItemEnter, onLit }) {
+/* ---- Timeline (component site: timeline) ---- */
+function Timeline({ items, fire = false, onItemEnter }) {
   const ref = useRef(null);
   const fillRef = useRef(null);
   const [lit, setLit] = useState(() => new Set());
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
-  const onLitRef = useRef(onLit);
-  useEffect(() => { onLitRef.current = onLit; }, [onLit]);
-
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-
-    /* reveal (opacity/posun) zostáva naviazaný na viditeľnosť */
     const io = new IntersectionObserver(es => es.forEach(e => {
-<<<<<<< HEAD
       if (e.isIntersecting) {
+        e.target.classList.add("is-visible");
         const idx = Number(e.target.dataset.idx);
-        setSeen(p => (p.has(idx) ? p : new Set(p).add(idx)));
+        setLit(prev => (prev.has(idx) ? prev : new Set([...prev, idx])));
         io.unobserve(e.target);
       }
     }), { threshold: .3 });
-    const nodes = Array.from(el.querySelectorAll(".tl-item"));
-    nodes.forEach(n => io.observe(n));
-=======
-      if (e.isIntersecting) { e.target.classList.add("is-visible"); io.unobserve(e.target); }
-    }), { threshold: .3 });
-    const nodes = Array.from(el.querySelectorAll(".tl-item"));
-    nodes.forEach(i => io.observe(i));
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
-
+    el.querySelectorAll(".tl-item").forEach(i => io.observe(i));
     let raf = null;
     const onScroll = () => {
       if (raf) return;
@@ -556,59 +529,17 @@ function Timeline({ items, fire = false, onItemEnter, onLit }) {
         const r = el.getBoundingClientRect();
         const p = Math.min(1, Math.max(0, (window.innerHeight * .7 - r.top) / r.height));
         if (fillRef.current) fillRef.current.style.height = `${p * 100}%`;
-
-        /* dokiaľ čiara siaha v pixeloch od vrchu timeline */
-        const fillPx = p * el.offsetHeight;
-<<<<<<< HEAD
-        const add = [];
-        nodes.forEach((n, i) => {
-          /* stred guličky: .tl-item::before má top .25rem a výšku 14px */
-          if (!litRef.current.has(i) && fillPx >= n.offsetTop + 11) add.push(i);
-        });
-        if (add.length) {
-          const next = new Set(litRef.current);
-          add.forEach(i => next.add(i));
-          litRef.current = next;
-          setLit(next);
-          add.forEach(i => onLitRef.current?.(i));
-        }
-=======
-        setLit(prev => {
-          let next = prev;
-          nodes.forEach((n, i) => {
-            /* stred guličky: .tl-item::before má top .25rem a výšku 14px */
-            const dotY = n.offsetTop + 4 + 7;
-            if (fillPx >= dotY && !next.has(i)) {
-              if (next === prev) next = new Set(prev);
-              next.add(i);
-              onLitRef.current?.(i);
-            }
-          });
-          return next;
-        });
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
       });
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
-    return () => {
-      io.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
+    return () => { io.disconnect(); window.removeEventListener("scroll", onScroll); };
   }, []);
-
   return (
     <div className="mv-timeline" ref={ref}>
       <div className="mv-timeline__line"><div className="mv-timeline__fill" ref={fillRef} /></div>
       {items.map((it, i) => (
-<<<<<<< HEAD
-        <div data-idx={i} key={i}
-          className={`tl-item${seen.has(i) ? " is-visible" : ""}${lit.has(i) ? " is-lit" : ""}`}
-=======
-        <div className={`tl-item ${lit.has(i) ? "is-lit" : ""}`} data-idx={i} key={i}
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
+        <div className="tl-item" data-idx={i} key={i}
           onPointerEnter={onItemEnter ? () => onItemEnter(i) : undefined}>
           {fire && <span className="tl-flame" aria-hidden="true"><FlameDot active={lit.has(i)} /></span>}
           <span className="tl-num">{it.n}</span>
@@ -636,21 +567,12 @@ const PILLARS = [
 ];
 
 const PROJECTS = [
-<<<<<<< HEAD
-  { t: "RFA – Real Fight Arena", cat: "Šport · Eventy · Broadcast", d: "Kompletná vizuálna identita, promo kampane, event branding, video produkcia a broadcast pre najväčšiu MMA organizáciu na Slovensku.", bg: "/clients/rfa-bg.webp" },
-  { t: "Hip Hop Žije Festival", cat: "Hudba · Festival", d: "Najväčší hip-hopový festival na Slovensku — marketing, médiá a jubilejný dokument 10 rokov Hip Hop Žije.", bg: "/clients/hhz-bg.webp" },
-  { t: "XBIO", cat: "E-commerce · Brand", d: "Budovanie značky a výkonnostný marketing pre e-shop so zdravou výživou, CBD olejmi a doplnkami.", url: "https://www.xbio.sk", bg: "/clients/xbio-bg.webp" },
-  { t: "ThaiSpot", cat: "Wellness · Marketing", d: "Marketing a budovanie značky pre tradičné thajské masáže a wellness v centre Bratislavy.", url: "https://www.thaispot.sk", bg: "/clients/thaispot-bg.webp" },
-  { t: "Alchymista Bar", cat: "Gastro · Eventy", d: "Branding, eventy a profesionálny bar catering v spolupráci so skúseným tímom.", url: "https://www.alchymista.pub", bg: "/clients/alchymista-bg.webp" },
-  { t: "GS Group Company", cat: "Distribúcia · B2B", d: "Veľkoobchod a distribúcia nápojov pre reštaurácie, hotely, bary a gastro prevádzky.", url: "https://www.gsgc.eu", bg: "/clients/gsgc-bg.webp" },
-=======
   { t: "RFA – Real Fight Arena", cat: "Šport · Eventy · Broadcast", d: "Kompletná vizuálna identita, promo kampane, event branding, video produkcia a broadcast pre najväčšiu MMA organizáciu na Slovensku." },
   { t: "Hip Hop Žije Festival", cat: "Hudba · Festival", d: "Najväčší hip-hopový festival na Slovensku — marketing, médiá a jubilejný dokument 10 rokov Hip Hop Žije." },
   { t: "XBIO", cat: "E-commerce · Brand", d: "Budovanie značky a výkonnostný marketing pre e-shop so zdravou výživou, CBD olejmi a doplnkami.", url: "https://www.xbio.sk", logo: "/clients/xbio.webp", bg: "/clients/xbio-bg.webp" },
   { t: "ThaiSpot", cat: "Wellness · Marketing", d: "Marketing a budovanie značky pre tradičné thajské masáže a wellness v centre Bratislavy.", url: "https://www.thaispot.sk", logo: "/clients/thaispot.webp", bg: "/clients/thaispot-bg.webp" },
   { t: "Alchymista Bar", cat: "Gastro · Eventy", d: "Branding, eventy a profesionálny bar catering v spolupráci so skúseným tímom.", url: "https://www.alchymista.pub", logo: "/clients/alchymista.webp", bg: "/clients/alchymista-bg.webp" },
   { t: "GS Group Company", cat: "Distribúcia · B2B", d: "Veľkoobchod a distribúcia nápojov pre reštaurácie, hotely, bary a gastro prevádzky.", url: "https://www.gsgc.eu", logo: "/clients/gsgc.webp", bg: "/clients/gsgc-bg.webp" },
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
 ];
 
 const MEDIA_ITEMS = [
@@ -681,24 +603,11 @@ const CONTACT_EMAIL = "office@fehuprosperity.eu";
 export default function FehuFireV2() {
   const [dark, setDark] = useState(true);
   const [navOpen, setNavOpen] = useState(false);
-<<<<<<< HEAD
-  /* navigácia po odscrollovaní zmatnie */
-  const [navScrolled, setNavScrolled] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setNavScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-=======
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
   /* cookies + právne dokumenty */
   const [legal, setLegal] = useState({ open: false, tab: "cookies" });
   const [ckSignal, setCkSignal] = useState(0);
   const openLegal = useCallback(tab => setLegal({ open: true, tab }), []);
   const [activePillar, setActivePillar] = useState(0);
-  /* vrcholy pentagonu zapálené ohnivou čiarou v timeline */
-  const [litPillars, setLitPillars] = useState(() => new Set());
   const sectionRefs = useRef({});
 
   const scrollTo = useCallback((id) => {
@@ -748,28 +657,14 @@ export default function FehuFireV2() {
       <ScrollProgress />
       <CursorTrail />
 
-      {/* NAV — logo v strede, sekcie okolo neho podľa kruhu */}
-<<<<<<< HEAD
-      <nav className={`nav nav-orbit${navScrolled ? " is-scrolled" : ""}`}>
-=======
-      <nav className="nav nav-orbit">
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
-        <div className="nav-arc nav-arc-l">
-          {NAV_LEFT.map(n => (
-            <button key={n.id} className="nav-sec" onClick={() => scrollTo(n.id)}>{n.label}</button>
-          ))}
-        </div>
+      {/* NAV */}
+      <nav className="nav">
         <div className="logo" onClick={() => scrollTo("top")}><img className="logo-rune-img logo-wide-img" src="/logo-wide.webp" alt="FEHU Prosperity" /></div>
-        <div className="nav-arc nav-arc-r">
-          {NAV_RIGHT.map(n => (
-            <button key={n.id} className="nav-sec" onClick={() => scrollTo(n.id)}>{n.label}</button>
-          ))}
-        </div>
         <div className="nav-right">
           <button className="theme-toggle" onClick={() => setDark(d => !d)} aria-label="Prepnúť tému">
             {dark ? "☀" : "☾"}
           </button>
-          <Magnetic strength={10}><button className="nav-cta" onClick={() => scrollTo("kontakt")}>Mám záujem o Vaše služby</button></Magnetic>
+          <Magnetic strength={10}><button className="nav-cta" onClick={() => scrollTo("kontakt")}>Začať</button></Magnetic>
           <button className="nav-burger" onClick={() => setNavOpen(o => !o)} aria-label="Menu" aria-expanded={navOpen}>{navOpen ? "✕" : "☰"}</button>
         </div>
         {navOpen && (
@@ -796,7 +691,7 @@ export default function FehuFireV2() {
           </p>
           <Magnetic>
             <button className="hero-btn" onClick={() => scrollTo("kontakt")}>
-              Mám záujem o Vaše služby <span className="arr">→</span>
+              Začať <span className="arr">→</span>
             </button>
           </Magnetic>
           <div className="scroll-hint" onClick={() => scrollTo("strategia")}>
@@ -868,11 +763,9 @@ export default function FehuFireV2() {
           </p></div>
 
           <div className="strat-grid">
-            <Timeline items={PILLARS} fire onItemEnter={setActivePillar}
-              onLit={i => setLitPillars(s => (s.has(i) ? s : new Set([...s, i])))} />
+            <Timeline items={PILLARS} fire onItemEnter={setActivePillar} />
             <div className="strat-radar">
-              <InteractiveRadar items={PILLARS} active={activePillar}
-                setActive={setActivePillar} lit={litPillars} />
+              <InteractiveRadar items={PILLARS} active={activePillar} setActive={setActivePillar} />
             </div>
           </div>
         </div>
@@ -1160,6 +1053,7 @@ export default function FehuFireV2() {
           </nav>
           <span>Bratislava · Praha · Viedeň</span>
         </div>
+        <div className="foot-giant" data-plx="0.06" aria-hidden="true">FEHU</div>
       </footer>
 
       <ScrollTopFab onClick={() => scrollTo("top")} />
@@ -1212,64 +1106,16 @@ const V2_CSS = `
 .tilt-holder{display:flex;}
 .tilt-holder .pillar-card{flex:1;}
 
-/* ── Stratégia: timeline vľavo + pentagon vpravo ──
-   pentagon je vodorovne vycentrovaný voči textu vľavo ── */
+/* ── Stratégia: timeline vľavo + pentagram vpravo ── */
 .strat-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,480px);
-  gap:3.4rem;align-items:center;margin-top:3rem;text-align:left;}
+  gap:3.4rem;align-items:start;margin-top:3rem;text-align:left;}
 .strat-grid .mv-timeline{margin-left:.4rem;}
-.strat-radar{position:sticky;top:110px;padding:0;
-  display:flex;align-items:center;justify-content:center;}
-.strat-radar .pillar-ring{width:min(400px,100%);margin:0 auto;}
+.strat-radar{position:sticky;top:110px;padding:1rem 2.6rem 0;}
+.strat-radar .pillar-ring{width:min(400px,100%);}
 @media(max-width:960px){
   .strat-grid{grid-template-columns:1fr;gap:2.4rem;}
   .strat-radar{position:static;order:-1;padding:0;display:flex;justify-content:center;}
 }
-
-/* ── NAV: logo v strede, sekcie v dvoch oblúkoch okolo neho ── */
-.nav-orbit{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
-<<<<<<< HEAD
-  column-gap:1.1rem;position:fixed;top:0;left:0;right:0;z-index:50;
-  transition:background .45s ease, backdrop-filter .45s ease,
-    border-color .45s ease, padding .35s ease;}
-/* po odscrollovaní stmavne a zpriehľadnie */
-.nav-orbit.is-scrolled{
-  background:color-mix(in srgb, var(--bg) 42%, transparent);
-  backdrop-filter:blur(18px) saturate(1.3);
-  -webkit-backdrop-filter:blur(18px) saturate(1.3);
-  border-bottom-color:color-mix(in srgb,var(--accent) 16%, transparent);
-  padding-top:.62rem;padding-bottom:.62rem;
-  box-shadow:0 10px 34px rgba(0,0,0,.28);}
-.nav-orbit.is-scrolled .logo-wide-img{height:28px;transition:height .35s ease;}
-=======
-  column-gap:1.1rem;position:relative;}
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
-.nav-arc{display:flex;align-items:center;gap:.15rem;min-width:0;}
-.nav-arc-l{justify-content:flex-end;}
-.nav-arc-r{justify-content:flex-start;}
-.nav-orbit .logo{justify-self:center;}
-.nav-sec{background:none;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;
-  font-size:.68rem;font-weight:700;letter-spacing:.07em;padding:.42rem .5rem;border-radius:8px;
-  color:var(--fg-dim);transition:color .22s, background .22s, transform .22s cubic-bezier(.22,1,.36,1);}
-.nav-sec:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 10%, transparent);
-  transform:translateY(-1px);}
-/* utility (téma + CTA) sedia úplne vpravo, mimo mriežky, aby logo zostalo na strede */
-.nav-orbit .nav-right{position:absolute;right:0;top:50%;transform:translateY(-50%);}
-.nav-cta{white-space:nowrap;}
-
-/* postupné zjednodušovanie pri užších obrazovkách */
-@media(max-width:1560px){.nav-orbit .nav-cta{display:none;}}
-@media(max-width:1200px){
-  .nav-sec{font-size:.63rem;padding:.4rem .34rem;letter-spacing:.03em;}
-}
-@media(max-width:1040px){
-  .nav-orbit{grid-template-columns:auto 1fr auto;}
-  .nav-arc{display:none;}
-  .nav-orbit .logo{justify-self:start;}
-  .nav-orbit .nav-right{position:static;transform:none;justify-self:end;}
-  .nav-orbit .nav-cta{display:inline-block;}
-}
-@media(max-width:900px){.nav-cta{font-size:0;padding:.55rem 1.1rem;}
-  .nav-cta::after{content:"Mám záujem";font-size:.72rem;}}
 
 /* ── Rozkliknuteľný text (Čítať viac) ── */
 .rm{width:100%;}
@@ -1301,31 +1147,14 @@ const V2_CSS = `
 .tl-flame{position:absolute;left:calc(-2.6rem + 11px);top:calc(.25rem + 7px);
   width:72px;height:72px;transform:translate(-50%,-50%);pointer-events:none;z-index:1;
   opacity:.18;transition:opacity 1.1s cubic-bezier(.22,1,.36,1);}
-.tl-item.is-lit .tl-flame{opacity:1;}
+.tl-item.is-visible .tl-flame{opacity:1;}
 .tl-flame canvas{width:100%;height:100%;display:block;}
 
-/* ── Interaktívny radar + pentagon ── */
+/* ── Interaktívny radar + pentagram ── */
 .ir-ring .radar-pent{fill:none;stroke:color-mix(in srgb,var(--accent) 26%, transparent);
   stroke-width:1;stroke-linejoin:round;}
-/* ── zapálenie vrcholu, keď k nemu dorastie čiara v timeline ── */
-.ir-ring .radar-l.lit{stroke:color-mix(in srgb,var(--accent) 75%, transparent);opacity:.9;}
-.ir-ring .radar-node.lit{fill:var(--accent);
-  filter:drop-shadow(0 0 8px rgba(255,180,60,.9)) drop-shadow(0 0 18px rgba(255,120,10,.6));}
-.ir-ring .radar-ember{fill:rgba(255,150,40,.16);stroke:rgba(255,190,90,.5);stroke-width:.8;
-  transform-box:fill-box;transform-origin:center;
-  animation:emberIgnite .75s cubic-bezier(.22,1,.36,1) both, emberPulse 2.4s ease-in-out .75s infinite;}
-@keyframes emberIgnite{
-  0%{opacity:0;transform:scale(.25);}
-  55%{opacity:1;transform:scale(1.35);}
-  100%{opacity:.85;transform:scale(1);}
-}
-@keyframes emberPulse{
-  0%,100%{opacity:.6;transform:scale(1);filter:drop-shadow(0 0 6px rgba(255,150,40,.5));}
-  50%{opacity:1;transform:scale(1.12);filter:drop-shadow(0 0 14px rgba(255,170,50,.85));}
-}
-@media(prefers-reduced-motion:reduce){
-  .ir-ring .radar-ember{animation:none;opacity:.8;}
-}
+.ir-ring .radar-star{fill:color-mix(in srgb,var(--accent) 5%, transparent);
+  stroke:color-mix(in srgb,var(--accent) 34%, transparent);stroke-width:1.2;stroke-linejoin:round;}
 .ir-ring .radar-l{transition:stroke .3s, opacity .3s;}
 .ir-ring .radar-l.on{stroke:var(--accent);opacity:1;
   filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 70%, transparent));}
@@ -1358,15 +1187,14 @@ const V2_CSS = `
 .video-side{position:sticky;top:110px;display:flex;flex-direction:column;gap:1.2rem;}
 .video-note{margin:0;padding-left:1.1rem;border-left:3px solid var(--accent);
   font-size:.92rem;line-height:1.65;color:var(--fg-dim);}
-/* všetky karty rovnako široké aj vysoké — bez schodovitého odsadenia */
-.video-cards{display:grid;grid-auto-rows:1fr;gap:1.25rem;}
-.vc-item{margin-left:0;display:flex;}
-.vc-item .mv-tilt{width:100%;}
-.video-card{height:100%;min-height:172px;display:flex;flex-direction:column;}
-.video-card .pc-desc{margin-top:auto;}
+.video-cards{display:flex;flex-direction:column;gap:1.25rem;}
+.vc-item:nth-child(2){margin-left:28px;}
+.vc-item:nth-child(3){margin-left:56px;}
+.video-card{min-height:150px;}
 @media(max-width:960px){
   .video-split{grid-template-columns:1fr;}
   .video-side{position:static;}
+  .vc-item:nth-child(2),.vc-item:nth-child(3){margin-left:0;}
 }
 
 /* ── Prieskum: vyváženie stĺpcov ── */
@@ -1396,24 +1224,12 @@ const V2_CSS = `
   filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 45%, transparent));}
 /* ── logo klienta + fotka na pozadí karty ── */
 .flip-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;
-<<<<<<< HEAD
-  opacity:.42;transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);}
-/* prekryv drží text čitateľný aj nad fotkou */
-.flip-front::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:linear-gradient(180deg, color-mix(in srgb,var(--bg2) 30%, transparent) 0%,
-    color-mix(in srgb,var(--bg2) 82%, transparent) 58%, var(--bg2) 100%);}
-.flip:hover .flip-bg{opacity:.62;transform:scale(1.06);}
-=======
   opacity:.22;transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);}
 .flip-front::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(180deg, color-mix(in srgb,var(--bg2) 45%, transparent) 0%,
     color-mix(in srgb,var(--bg2) 88%, transparent) 62%, var(--bg2) 100%);}
 .flip:hover .flip-bg{opacity:.34;transform:scale(1.06);}
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
-/* pozor: iba z-index — position sa tu nesmie prepisovať,
-   inak emblém aj logo vypadnú z ľavého horného rohu */
-.flip-front h3,.flip-cat{position:relative;z-index:2;}
-.flip-hint,.flip-emblem,.flip-logo{z-index:2;}
+.flip-front h3,.flip-cat,.flip-hint,.flip-emblem,.flip-logo{position:relative;z-index:2;}
 .flip-logo{position:absolute;top:1rem;left:1.2rem;max-height:44px;max-width:56%;
   width:auto;height:auto;object-fit:contain;object-position:left center;opacity:.95;
   filter:drop-shadow(0 2px 10px rgba(0,0,0,.45));transition:opacity .3s;}
@@ -1490,9 +1306,8 @@ const V2_CSS = `
   background:radial-gradient(circle at 50% 42%, #2a1c06, #0c0803 78%) !important;
   box-shadow:0 0 0 1px rgba(244,214,120,.35), 0 0 34px rgba(255,150,40,.45),
     0 0 70px rgba(255,110,20,.25), inset 0 2px 8px rgba(0,0,0,.6);}
-/* runa v kruhu zmenšená o 30 % (72% → 50.4%) */
-.badge-rune{position:relative;z-index:3;width:50.4%;height:auto;display:block;
-  margin:0 auto;animation:runeFire 2.4s ease-in-out infinite;}
+.badge-rune{position:relative;z-index:3;width:72%;height:auto;display:block;
+  animation:runeFire 2.4s ease-in-out infinite;}
 @keyframes runeFire{
   0%,100%{filter:drop-shadow(0 0 9px rgba(255,180,60,.85)) drop-shadow(0 0 20px rgba(255,120,10,.5));transform:scale(1);}
   50%{filter:drop-shadow(0 0 17px rgba(255,210,110,1)) drop-shadow(0 0 36px rgba(255,140,20,.8));transform:scale(1.05);}
@@ -1606,8 +1421,7 @@ const V2_CSS = `
   border:3px solid color-mix(in srgb,var(--accent) 30%, transparent);
   transition:box-shadow .9s cubic-bezier(.22,1,.36,1), border-color .9s cubic-bezier(.22,1,.36,1);}
 .tl-item.is-visible{opacity:1;transform:none;}
-/* zapálenie guličky — spúšťa ho čiara, nie viditeľnosť položky */
-.tl-item.is-lit::before{border-color:var(--accent);
+.tl-item.is-visible::before{border-color:var(--accent);
   box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 20%, transparent),
   0 0 16px color-mix(in srgb,var(--accent) 55%, transparent);}
 .tl-num{font-size:.68rem;font-weight:800;letter-spacing:.26em;color:var(--accent);}
@@ -1653,16 +1467,12 @@ const V2_CSS = `
   font-size:.7rem;color:var(--fg-dim);transition:color .22s;}
 .foot-legal button:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px;}
 @media(max-width:720px){.v2-footer .foot-bottom{justify-content:center;text-align:center;}}
-<<<<<<< HEAD
-/* (obrie textové FEHU v pätičke odstránené) */
-=======
 .foot-giant{font-size:clamp(7rem,24vw,21rem);font-weight:900;line-height:.78;text-align:center;
   letter-spacing:.02em;user-select:none;pointer-events:none;margin-top:1.5rem;
   color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--accent) 26%, transparent);
   background:linear-gradient(180deg, color-mix(in srgb,var(--accent) 14%, transparent), transparent 85%);
   -webkit-background-clip:text;background-clip:text;
   transform:translateY(var(--plx,0));will-change:transform;}
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
 /* ── plávajúci scroll-top s kruhovým progresom ── */
 .stf{position:fixed;right:20px;bottom:66px;z-index:998;width:52px;height:52px;padding:0;
   border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;
