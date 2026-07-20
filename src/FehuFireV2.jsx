@@ -32,7 +32,7 @@ function CursorTrail() {
           vx: (Math.random() - .5) * .9,
           vy: (Math.random() - .5) * .9 - .45,
           size: Math.random() * 2.6 + 1.4,
-          hue: 42 + Math.random() * 12,
+          hue: 26 + Math.random() * 18,
         });
       }
       if (parts.length > 160) parts.splice(0, parts.length - 160);
@@ -661,9 +661,9 @@ export default function FehuFireV2() {
         <div className="wrap vis-wrap">
           <div className="vis-text rv-l">
             <p className="eyebrow" style={{textAlign:"left", margin:0}}>Prieskum trhu</p>
-            <SplitHead segments={[
-              { t: "Rozhodnutia postavené na " }, { t: "dátach", serif: true }, { t: "," }, { br: true },
-              { t: "nie na domnienkach." },
+            <SplitHead className="big-head head-md" segments={[
+              { t: "Rozhodnutia postavené na " }, { t: "dátach", serif: true },
+              { t: ", nie na domnienkach." },
             ]} />
             <p className="sub-lead" style={{margin:0}}>
               Pre našich klientov realizujeme profesionálne prieskumy trhu, ktoré poskytujú
@@ -731,7 +731,7 @@ export default function FehuFireV2() {
         <Blob speed="0.10" style={{ width: 300, height: 300, top: "35%", right: "-80px", background: "rgba(176,128,30,.06)" }} />
         <div className="wrap">
           <p className="eyebrow rv">Eventy</p>
-          <SplitHead className="big-head center center-split" segments={[
+          <SplitHead className="big-head center center-split head-one" segments={[
             { t: "Podujatia " }, { t: "na kľúč", serif: true }, { t: " — od konceptu po deň D" },
           ]} />
           <div className="rv" style={{transitionDelay:"160ms"}}><p className="sub-lead center-lead">
@@ -1080,20 +1080,49 @@ const V2_CSS = `
 @media(max-width:520px){.research-tiles{grid-template-columns:1fr;}}
 
 /* ── CTA badge: FEHU logo v ohni ── */
-.badge-fire{position:relative;overflow:visible !important;}
-.badge-rune{position:relative;z-index:2;width:58%;height:auto;display:block;
+.sec-cta .orbit-badge{width:172px;height:172px;margin-bottom:2.2rem;}
+.sec-cta .badge-text{font-size:8px;letter-spacing:1.4px;}
+.badge-fire{width:96px !important;height:96px !important;overflow:visible !important;
+  background:radial-gradient(circle at 50% 42%, #2a1c06, #0c0803 78%) !important;
+  box-shadow:0 0 0 1px rgba(244,214,120,.35), 0 0 34px rgba(255,150,40,.45),
+    0 0 70px rgba(255,110,20,.25), inset 0 2px 8px rgba(0,0,0,.6);}
+.badge-rune{position:relative;z-index:3;width:60%;height:auto;display:block;
   animation:runeFire 2.4s ease-in-out infinite;}
 @keyframes runeFire{
-  0%,100%{filter:drop-shadow(0 0 8px rgba(244,214,120,.75)) drop-shadow(0 0 18px rgba(216,172,60,.45));transform:scale(1);}
-  50%{filter:drop-shadow(0 0 15px rgba(250,224,140,1)) drop-shadow(0 0 32px rgba(226,182,70,.75));transform:scale(1.05);}
+  0%,100%{filter:drop-shadow(0 0 9px rgba(255,180,60,.85)) drop-shadow(0 0 20px rgba(255,120,10,.5));transform:scale(1);}
+  50%{filter:drop-shadow(0 0 17px rgba(255,210,110,1)) drop-shadow(0 0 36px rgba(255,140,20,.8));transform:scale(1.05);}
 }
-.badge-flame{position:absolute;inset:-8px;border-radius:50%;z-index:1;pointer-events:none;
-  background:radial-gradient(circle at 50% 72%, rgba(242,206,100,.4), rgba(205,158,44,.16) 45%, transparent 65%);
-  animation:flameFlick 1.7s ease-in-out infinite alternate;}
+.badge-flame{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);
+  width:150%;height:150%;border-radius:50%;z-index:1;pointer-events:none;
+  background:radial-gradient(circle at 50% 78%, rgba(255,170,50,.55), rgba(255,100,10,.22) 42%, transparent 66%);
+  filter:blur(6px);animation:flameFlick 1.6s ease-in-out infinite alternate;}
 @keyframes flameFlick{
-  from{opacity:.55;transform:scale(.94) translateY(2px);}
-  to{opacity:1;transform:scale(1.07) translateY(-2px);}
+  from{opacity:.6;transform:translateX(-50%) scale(.92) translateY(3px);}
+  to{opacity:1;transform:translateX(-50%) scale(1.08) translateY(-3px);}
 }
+
+/* ── veľkosti nadpisov ── */
+.head-md{font-size:clamp(1.7rem,3.4vw,2.5rem) !important;line-height:1.1;max-width:16ch;}
+.head-one{font-size:clamp(1.5rem,3vw,2.55rem) !important;line-height:1.1;
+  max-width:none;white-space:nowrap;}
+@media(max-width:1100px){.head-one{white-space:normal;}}
+.head-md .st-w,.head-one .st-w{margin-right:.24em;}
+
+/* ── Eventy: menšie medzery, väčší slider ── */
+.sec-cases{padding-top:4rem;padding-bottom:4rem;}
+.sec-cases .sub-lead.center-lead{margin-bottom:.6rem;}
+.cf-outer{margin-top:.4rem;}
+.cf-stage{height:clamp(600px, 62vw, 700px);}
+.cf-card{width:min(470px,80vw);}
+
+/* ── Médiá: vzduch nad sekciou ── */
+.sec-services{padding-top:7rem !important;padding-bottom:5rem !important;}
+
+/* ── Broadcast + Timeline: zarovnanie vľavo ── */
+.sec-data{text-align:left;}
+.sec-data .big-head,.sec-data .sub-lead,.sec-data .st-head{margin-left:0;margin-right:0;text-align:left;}
+.bc-side .st-head,.tl-side .st-head{text-align:left;}
+.sec-timeline{text-align:left;}
 
 /* ── Animated Tabs ── */
 .media-tabs-card{text-align:center;}

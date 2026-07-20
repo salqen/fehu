@@ -405,11 +405,11 @@ export function FehuOrbital({ onNavigate }) {
         p.life -= p.decay; p.size *= .975;
         if (p.life <= 0) { parts.splice(i, 1); continue; }
         const al = p.life * p.life;
-        const g = Math.min(220, Math.floor(170 + p.life * 60));
+        const g = Math.min(220, Math.floor(120 + p.life * 110));
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 2.4, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,${g},85,${al * 0.1})`; ctx.fill();
+        ctx.fillStyle = `rgba(255,${g},20,${al * 0.1})`; ctx.fill();
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,${g},95,${al * 0.9})`; ctx.fill();
+        ctx.fillStyle = `rgba(255,${g},30,${al * 0.9})`; ctx.fill();
       }
       raf = requestAnimationFrame(loop);
     }
@@ -603,7 +603,7 @@ export default function FehuFire() {
     });
   }, [R, W, H]);
 
-  const accent = { r: 232, g: 196, b: 106 }; // #ff9628 ohnivá
+  const accent = { r: 255, g: 150, b: 40 }; // #ff9628 ohnivá
 
   const handleReveal = useCallback((idx) => {
     if (idx === -1) { setCenterVisible(true); return; }
