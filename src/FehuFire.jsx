@@ -733,7 +733,8 @@ export default function FehuFire() {
           <blockquote className="about-quote rv" style={{transitionDelay:"200ms"}}>
             „Od nápadu cez stratégiu až po finálnu realizáciu – všetko pod jednou strechou.“
           </blockquote>
-          <div className="about-body rv" style={{transitionDelay:"260ms"}}>
+          <div className="about-grid rv" style={{transitionDelay:"260ms"}}>
+          <div className="about-body">
             <p>Veríme, že úspešná značka nevzniká náhodou. Je výsledkom jasnej vízie, premyslenej stratégie,
             kvalitnej komunikácie a dôslednej realizácie. Preto ku každému projektu pristupujeme individuálne
             a navrhujeme riešenia, ktoré prinášajú reálne výsledky a dlhodobú hodnotu.</p>
@@ -750,6 +751,11 @@ export default function FehuFire() {
             a prinášajú merateľné výsledky.</p>
             <p><b>Fehu Prosperity</b> je partner pre podnikateľov, startupy aj etablované spoločnosti,
             ktoré chcú rásť, budovať silnú značku a uspieť v dynamickom podnikateľskom prostredí.</p>
+          </div>
+          <figure className="founder-card">
+            <img src="/boris-marhansky.jpg" alt="Boris Marhanský — zakladateľ Fehu Prosperity" loading="lazy" />
+            <figcaption><b>Boris Marhanský</b><span>Zakladateľ · Fehu Prosperity</span></figcaption>
+          </figure>
           </div>
         </div>
       </section>
@@ -1851,5 +1857,26 @@ html{ scroll-behavior:smooth; }
 @media (max-width:860px){ .nav-burger{ display:inline-flex; } }
 @media (max-width:560px){ .nav-cta{ display:none; } }
 @media (max-width:760px){ .sec-visual, .sec-showcase{ padding-left:1.4rem; padding-right:1.4rem; } }
+
+/* ── O nás: zakladateľ ── */
+.about-grid{ display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:2.6rem; align-items:start; }
+.founder-card{
+  margin:0; position:sticky; top:96px; border-radius:20px; overflow:hidden;
+  border:1px solid var(--line); background:var(--bg2);
+  box-shadow:0 24px 60px rgba(0,0,0,.5), 0 0 46px color-mix(in srgb,var(--accent) 9%, transparent);
+  transition:transform .35s ease, box-shadow .35s ease;
+}
+.founder-card:hover{
+  transform:translateY(-5px);
+  box-shadow:0 32px 70px rgba(0,0,0,.55), 0 0 60px color-mix(in srgb,var(--accent) 18%, transparent);
+}
+.founder-card img{ width:100%; display:block; }
+.founder-card figcaption{ padding:.95rem 1.15rem 1.05rem; display:flex; flex-direction:column; gap:.18rem; }
+.founder-card b{ font-size:1rem; letter-spacing:-.01em; }
+.founder-card span{ font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--fg-dim); }
+@media (max-width:900px){
+  .about-grid{ grid-template-columns:1fr; }
+  .founder-card{ position:static; max-width:440px; }
+}
 
 `;

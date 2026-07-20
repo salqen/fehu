@@ -3,13 +3,96 @@ import { POSTERS, LOGO_EMBLEM, LOGO_FULL, MENU, FehuOrbital, CSS } from "./FehuF
 
 /* ============================================================
    FEHU — VERZIA 2 · komponenty z COMPONENT SITE
-   • Card 3D Tilt (piliere stratégie + video dokumenty)
-   • Bento Grid so spotlight hoverom (Projekty)
+   • Cursor Trail (ohnivá stopa za kurzorom)
+   • Scroll Progress (gradient lišta hore)
+   • Magnetic Button (CTA tlačidlá)
+   • Interaktívny radar 5 pilierov (hover/klik + auto-cyklus)
+   • Card 3D Tilt (piliere + video dokumenty + foto zakladateľa)
+   • Flip Cards (Projekty)
    • Coverflow 3D slider (Eventy — RFA plagáty)
-   • Animated Tabs s klzavým indikátorom (Médiá)
-   • Accordion s plynulou výškou (Broadcast & Podcast)
-   Všetko adaptované do ohnivej FEHU palety.
+   • Animated Tabs (Médiá) · Accordion (Broadcast)
+   • Footer-mega štýl (reveal, hover-slide linky, giant logo, scroll-top)
    ============================================================ */
+
+/* ---- Cursor Trail (component site: cursor-trail, preset „Brand") ---- */
+function CursorTrail() {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    if (window.matchMedia("(pointer:coarse)").matches) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    let parts = [], raf;
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize();
+    const onMove = (e) => {
+      for (let i = 0; i < 3; i++) {
+        parts.push({
+          x: e.clientX + (Math.random() - .5) * 8,
+          y: e.clientY + (Math.random() - .5) * 8,
+          vx: (Math.random() - .5) * .9,
+          vy: (Math.random() - .5) * .9 - .45,
+          size: Math.random() * 2.6 + 1.4,
+          hue: 22 + Math.random() * 20,
+        });
+      }
+      if (parts.length > 160) parts.splice(0, parts.length - 160);
+    };
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        ctx.fillStyle = `hsla(${p.hue},95%,${48 + Math.random() * 16}%,${Math.min(1, p.size / 3)})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+        p.x += p.vx; p.y += p.vy; p.size -= .09;
+        if (p.size <= 0) parts.splice(i, 1);
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("resize", resize);
+    draw();
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+  return <canvas ref={canvasRef} className="mv-trail" aria-hidden="true" />;
+}
+
+/* ---- Scroll Progress (component site: scroll-progress) ---- */
+function ScrollProgress() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const onScroll = () => {
+      const h = document.documentElement;
+      const p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+      if (ref.current) ref.current.style.transform = `scaleX(${p})`;
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return <div className="mv-progress" ref={ref} aria-hidden="true" />;
+}
+
+/* ---- Magnetic Button (component site: magnetic-button) ---- */
+function Magnetic({ children, strength = 16, className = "" }) {
+  const ref = useRef(null);
+  const onMove = (e) => {
+    const el = ref.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2);
+    const dy = e.clientY - (r.top + r.height / 2);
+    el.style.transform = `translate(${(dx / r.width) * strength}px, ${(dy / r.height) * strength}px)`;
+  };
+  const onLeave = () => { if (ref.current) ref.current.style.transform = "translate(0,0)"; };
+  return (
+    <span ref={ref} className={`mv-magnet ${className}`} onPointerMove={onMove} onPointerLeave={onLeave}>
+      {children}
+    </span>
+  );
+}
 
 /* ---- Card 3D Tilt (component site: card-3d-tilt) ---- */
 function Tilt({ children, className = "", style, max = 10, scale = 1.03 }) {
@@ -37,6 +120,65 @@ function Tilt({ children, className = "", style, max = 10, scale = 1.03 }) {
   );
 }
 
+/* ---- Interaktívny radar 5 pilierov ---- */
+function InteractiveRadar({ items, active, setActive }) {
+  const locked = useRef(false);
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (!locked.current) setActive(a => (a + 1) % items.length);
+    }, 2600);
+    return () => clearInterval(t);
+  }, [items.length, setActive]);
+
+  return (
+    <div className="pillars">
+      <div className="pillar-ring ir-ring"
+        onPointerEnter={() => { locked.current = true; }}
+        onPointerLeave={() => { locked.current = false; }}>
+        <svg viewBox="0 0 400 400" className="radar">
+          <circle cx="200" cy="200" r="160" className="radar-c"/>
+          <circle cx="200" cy="200" r="110" className="radar-c"/>
+          <circle cx="200" cy="200" r="60" className="radar-c"/>
+          {items.map((_, i) => {
+            const a = (-90 + i * 72) * Math.PI / 180;
+            return <line key={i} x1="200" y1="200"
+              x2={200 + Math.cos(a) * 160} y2={200 + Math.sin(a) * 160}
+              className={`radar-l ${active === i ? "on" : ""}`}/>;
+          })}
+          {items.map((_, i) => {
+            const a = (-90 + i * 72) * Math.PI / 180;
+            const cx = 200 + Math.cos(a) * 160, cy = 200 + Math.sin(a) * 160;
+            return (
+              <g key={i} className="ir-node-g" style={{ cursor: "pointer" }}
+                onPointerEnter={() => setActive(i)} onClick={() => setActive(i)}>
+                <circle cx={cx} cy={cy} r="26" fill="transparent" />
+                <circle cx={cx} cy={cy} r={active === i ? 13 : 9}
+                  className={`radar-node ${active === i ? "on" : ""}`}/>
+              </g>
+            );
+          })}
+        </svg>
+        <div className="ring-center-label ir-center" key={active}>
+          <i className="ir-num">{items[active].n}</i>
+          {items[active].t}
+        </div>
+        {items.map((p, i) => {
+          const a = (-90 + i * 72) * Math.PI / 180;
+          const x = 50 + Math.cos(a) * 46, y = 50 + Math.sin(a) * 46;
+          const anchor = ["pl-top", "pl-right", "pl-br", "pl-bl", "pl-left"][i];
+          return (
+            <button key={i} className={`pillar-label ${anchor} ${active === i ? "on" : ""}`}
+              style={{ left: `${x}%`, top: `${y}%` }}
+              onPointerEnter={() => setActive(i)} onClick={() => setActive(i)}>
+              <i>{p.n}</i>{p.t}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ---- Coverflow 3D slider (component site: slider-3-coverflow) ---- */
 function Coverflow({ items }) {
   const [active, setActive] = useState(0);
@@ -44,7 +186,7 @@ function Coverflow({ items }) {
   const total = items.length;
   const restart = useCallback(() => {
     clearInterval(timer.current);
-    timer.current = setInterval(() => setActive(a => (a + 1) % total), 3800);
+    timer.current = setInterval(() => setActive(a => (a + 1) % total), 4000);
   }, [total]);
   useEffect(() => { restart(); return () => clearInterval(timer.current); }, [restart]);
   const go = (n) => { setActive((n + total) % total); restart(); };
@@ -58,10 +200,10 @@ function Coverflow({ items }) {
           if (off < -total / 2) off += total;
           const abs = Math.abs(off);
           const style = {
-            transform: `translateX(${off * 62}%) rotateY(${off * -38}deg) scale(${off === 0 ? 1 : .78 - abs * .04})`,
+            transform: `translateX(${off * 52}%) rotateY(${off * -35}deg) scale(${off === 0 ? 1 : .82 - abs * .05})`,
             zIndex: 100 - abs,
-            opacity: abs > 2 ? 0 : 1 - abs * .18,
-            filter: off === 0 ? "none" : "brightness(.5)",
+            opacity: abs > 2 ? 0 : 1 - abs * .14,
+            filter: off === 0 ? "none" : "brightness(.45)",
           };
           return (
             <div key={n} className="cf-card" style={style} onClick={() => go(n)}>
@@ -74,13 +216,34 @@ function Coverflow({ items }) {
             </div>
           );
         })}
-        <button className="cf-arrow left" onClick={() => go(active - 1)} aria-label="Predošlý">‹</button>
-        <button className="cf-arrow right" onClick={() => go(active + 1)} aria-label="Ďalší">›</button>
+        <Magnetic strength={10}><button className="cf-arrow" onClick={() => go(active - 1)} aria-label="Predošlý">‹</button></Magnetic>
+        <Magnetic strength={10} className="mv-magnet-right"><button className="cf-arrow" onClick={() => go(active + 1)} aria-label="Ďalší">›</button></Magnetic>
       </div>
       <div className="car-dots">
         {items.map((_, i) => (
           <button key={i} className={`car-dot ${i === active ? "on" : ""}`} onClick={() => go(i)} aria-label={`Plagát ${i + 1}`} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---- Flip Cards — Projekty (component site: flip-card + glare) ---- */
+function FlipCard({ p, delay }) {
+  return (
+    <div className="flip rv-scale" style={{ transitionDelay: `${delay}ms` }}>
+      <div className="flip-inner">
+        <div className="flip-front">
+          <img className="flip-emblem" src={LOGO_EMBLEM} alt="" aria-hidden="true" />
+          <h3>{p.t}</h3>
+          <span className="flip-cat">{p.cat}</span>
+          <span className="flip-hint">viac →</span>
+        </div>
+        <div className="flip-back">
+          <h3>{p.t}</h3>
+          <p>{p.d}</p>
+          {p.url && <a href={p.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>{p.url.replace("https://", "")} →</a>}
+        </div>
       </div>
     </div>
   );
@@ -97,7 +260,7 @@ function MediaTabs({ items }) {
       if (btn) setInd({ x: btn.offsetLeft, w: btn.offsetWidth });
     };
     measure();
-    const t = setTimeout(measure, 350); // po načítaní fontov
+    const t = setTimeout(measure, 350);
     window.addEventListener("resize", measure);
     return () => { clearTimeout(t); window.removeEventListener("resize", measure); };
   }, [active]);
@@ -165,6 +328,15 @@ const PILLARS = [
   { n: "05", t: "AI & Data Intelligence", d: "Rozhodnutia podložené dátami. Prieskumy trhu, analytika a moderné AI nástroje premieňajú čísla na stratégiu." },
 ];
 
+const PROJECTS = [
+  { t: "RFA – Real Fight Arena", cat: "Šport · Eventy · Broadcast", d: "Kompletná vizuálna identita, promo kampane, event branding, video produkcia a broadcast pre najväčšiu MMA organizáciu na Slovensku." },
+  { t: "Hip Hop Žije Festival", cat: "Hudba · Festival", d: "Najväčší hip-hopový festival na Slovensku — marketing, médiá a jubilejný dokument 10 rokov Hip Hop Žije." },
+  { t: "XBIO", cat: "E-commerce · Brand", d: "Budovanie značky a výkonnostný marketing pre e-shop so zdravou výživou.", url: "https://www.xbio.sk" },
+  { t: "ThaiSpot", cat: "Gastronómia · Marketing", d: "Marketing a budovanie značky pre autentickú thajskú gastronómiu.", url: "https://www.thaispot.sk" },
+  { t: "Alchymista Bar", cat: "Gastro · Eventy", d: "Branding, eventy a profesionálny bar catering v spolupráci so skúseným tímom." },
+  { t: "GS Group Company", cat: "Distribúcia · B2B", d: "Veľkoobchod a distribúcia nápojov pre reštaurácie, hotely, bary a gastro prevádzky." },
+];
+
 const MEDIA_ITEMS = [
   { tab: "Partnerstvá", n: "01", t: "Mediálne partnerstvá", d: "Spolupracujeme s poprednými slovenskými mediálnymi domami a titulmi — TV Markíza, Startitup, Nový Čas, Topky, Športky, Denník Šport a mnohé ďalšie.", tags: ["TV Markíza", "Startitup", "Denník Šport"] },
   { tab: "Mediálny plán", n: "02", t: "Mediálny plán na mieru", d: "Na základe cieľov klienta pripravíme individuálny mediálny plán, navrhneme najvhodnejšie komunikačné kanály a zabezpečíme profesionálnu realizáciu mediálnej kampane.", tags: ["Stratégia", "Kanály", "Realizácia"] },
@@ -179,21 +351,12 @@ const BROADCAST_ITEMS = [
   { n: "04", t: "Video formáty", d: "Profesionálne video formáty pre vašu značku — kompletné riešenie od prvotného nápadu až po finálnu realizáciu." },
 ];
 
-const BENTO = [
-  { size: "big", t: "RFA – Real Fight Arena", d: "Kompletná vizuálna identita, promo kampane, event branding, video produkcia a broadcast pre najväčšiu MMA organizáciu na Slovensku." },
-  { size: "", t: "Hip Hop Žije Festival", d: "Najväčší hip-hopový festival na Slovensku." },
-  { size: "", t: "XBIO", d: "E-commerce a budovanie značky.", url: "https://www.xbio.sk" },
-  { size: "wide", t: "GS Group Company", d: "Veľkoobchod a distribúcia nápojov pre reštaurácie, hotely, bary a gastro prevádzky." },
-  { size: "", t: "ThaiSpot", d: "Gastronómia a marketing.", url: "https://www.thaispot.sk" },
-  { size: "", t: "Alchymista Bar", d: "Branding a eventy." },
-];
-
 /* ============================================================ */
 export default function FehuFireV2() {
   const [dark, setDark] = useState(true);
   const [navOpen, setNavOpen] = useState(false);
+  const [activePillar, setActivePillar] = useState(0);
   const sectionRefs = useRef({});
-  const bentoRef = useRef(null);
 
   const scrollTo = useCallback((id) => {
     const el = sectionRefs.current[id];
@@ -212,18 +375,11 @@ export default function FehuFireV2() {
     return () => { clearTimeout(t); io.disconnect(); };
   }, []);
 
-  /* bento spotlight (component site: bento-grid) */
-  const onBentoMove = (e) => {
-    bentoRef.current?.querySelectorAll(".cell").forEach(c => {
-      const r = c.getBoundingClientRect();
-      c.style.setProperty("--bx", `${e.clientX - r.left}px`);
-      c.style.setProperty("--by", `${e.clientY - r.top}px`);
-    });
-  };
-
   return (
     <div className={`fehu ${dark ? "dark" : "light"}`}>
       <style>{CSS}{V2_CSS}</style>
+      <ScrollProgress />
+      <CursorTrail />
 
       {/* NAV */}
       <nav className="nav">
@@ -232,7 +388,7 @@ export default function FehuFireV2() {
           <button className="theme-toggle" onClick={() => setDark(d => !d)} aria-label="Prepnúť tému">
             {dark ? "☀" : "☾"}
           </button>
-          <button className="nav-cta" onClick={() => scrollTo("kontakt")}>Začať</button>
+          <Magnetic strength={10}><button className="nav-cta" onClick={() => scrollTo("kontakt")}>Začať</button></Magnetic>
           <button className="nav-burger" onClick={() => setNavOpen(o => !o)} aria-label="Menu" aria-expanded={navOpen}>{navOpen ? "✕" : "☰"}</button>
         </div>
         {navOpen && (
@@ -257,9 +413,11 @@ export default function FehuFireV2() {
             FEHU je full-service agentúra pre <span className="serif-it">stratégiu</span>, dizajn
             a digitálny marketing, ktorá pomáha značkám rásť <span className="serif-it">rýchlejšie</span>.
           </p>
-          <button className="hero-btn" onClick={() => scrollTo("kontakt")}>
-            Začať <span className="arr">→</span>
-          </button>
+          <Magnetic>
+            <button className="hero-btn" onClick={() => scrollTo("kontakt")}>
+              Začať <span className="arr">→</span>
+            </button>
+          </Magnetic>
           <div className="scroll-hint" onClick={() => scrollTo("strategia")}>
             <span>Posunúť nadol</span><span className="arr-down">↓</span>
           </div>
@@ -282,7 +440,8 @@ export default function FehuFireV2() {
           <blockquote className="about-quote rv" style={{transitionDelay:"200ms"}}>
             „Od nápadu cez stratégiu až po finálnu realizáciu – všetko pod jednou strechou.“
           </blockquote>
-          <div className="about-body rv" style={{transitionDelay:"260ms"}}>
+          <div className="about-grid rv" style={{transitionDelay:"260ms"}}>
+          <div className="about-body">
             <p>Veríme, že úspešná značka nevzniká náhodou. Je výsledkom jasnej vízie, premyslenej stratégie,
             kvalitnej komunikácie a dôslednej realizácie. Preto ku každému projektu pristupujeme individuálne
             a navrhujeme riešenia, ktoré prinášajú reálne výsledky a dlhodobú hodnotu.</p>
@@ -300,10 +459,15 @@ export default function FehuFireV2() {
             <p><b>Fehu Prosperity</b> je partner pre podnikateľov, startupy aj etablované spoločnosti,
             ktoré chcú rásť, budovať silnú značku a uspieť v dynamickom podnikateľskom prostredí.</p>
           </div>
+          <Tilt className="founder-card" max={6} scale={1.02}>
+            <img src="/boris-marhansky.jpg" alt="Boris Marhanský — zakladateľ Fehu Prosperity" loading="lazy" />
+            <figcaption><b>Boris Marhanský</b><span>Zakladateľ · Fehu Prosperity</span></figcaption>
+          </Tilt>
+          </div>
         </div>
       </section>
 
-      {/* STRATÉGIA — piliere s 3D tilt kartami */}
+      {/* STRATÉGIA — interaktívny radar + tilt karty */}
       <section className="sec sec-strategy" ref={setRef("strategia")}>
         <div className="wrap">
           <div className="rv"><h2 className="big-head">
@@ -314,37 +478,14 @@ export default function FehuFireV2() {
             Naše riešenia pomohli firmám každej veľkosti rásť rýchlejšie — bez ohľadu
             na odvetvie či model príjmov.
           </p></div>
-          <div className="pillars">
-            <div className="pillar-ring">
-              <svg viewBox="0 0 400 400" className="radar">
-                <circle cx="200" cy="200" r="160" className="radar-c"/>
-                <circle cx="200" cy="200" r="110" className="radar-c"/>
-                <circle cx="200" cy="200" r="60" className="radar-c"/>
-                {[0,1,2,3,4].map(i=>{
-                  const a = (-90 + i*72) * Math.PI/180;
-                  return <line key={i} x1="200" y1="200" x2={200+Math.cos(a)*160} y2={200+Math.sin(a)*160} className="radar-l"/>;
-                })}
-                {[0,1,2,3,4].map(i=>{
-                  const a = (-90 + i*72) * Math.PI/180;
-                  return <circle key={i} cx={200+Math.cos(a)*160} cy={200+Math.sin(a)*160} r="9" className="radar-node"/>;
-                })}
-              </svg>
-              <div className="ring-center-label">5 pilierov<br/>rastu</div>
-              {PILLARS.map((p,i)=>{
-                const a = (-90 + i*72) * Math.PI/180;
-                const x = 50 + Math.cos(a)*46, y = 50 + Math.sin(a)*46;
-                const anchor = ["pl-top","pl-right","pl-br","pl-bl","pl-left"][i];
-                return <span key={i} className={`pillar-label ${anchor}`} style={{left:`${x}%`,top:`${y}%`}}>
-                  <i>{p.n}</i>{p.t}
-                </span>;
-              })}
-            </div>
-          </div>
+
+          <InteractiveRadar items={PILLARS} active={activePillar} setActive={setActivePillar} />
 
           <div className="pillar-cards">
             {PILLARS.map((p,i)=>(
-              <div className="rv-scale tilt-holder" style={{transitionDelay:`${i*100}ms`}} key={i}>
-                <Tilt className="pillar-card">
+              <div className="rv-scale tilt-holder" style={{transitionDelay:`${i*100}ms`}} key={i}
+                onPointerEnter={() => setActivePillar(i)}>
+                <Tilt className={`pillar-card ${activePillar === i ? "pc-on" : ""}`}>
                   <span className="pc-num">{p.n}</span>
                   <h4 className="pc-title">{p.t}</h4>
                   <p className="pc-desc">{p.d}</p>
@@ -404,19 +545,21 @@ export default function FehuFireV2() {
               <li>Analýza, vyhodnotenie a praktické odporúčania</li>
             </ul>
           </div>
-          <div className="vis-text rv-r" style={{transitionDelay:"150ms", justifyContent:"center"}}>
-            <div className="about-body">
-              <p>Na základe výsledkov prieskumu pomáhame klientom efektívnejšie nastavovať marketingové kampane,
-              budovať značku, uvádzať nové produkty na trh, lepšie porozumieť svojim zákazníkom a vytvárať
-              biznis stratégie založené na reálnych dátach.</p>
-              <p>Naším cieľom nie je len zbierať informácie, ale poskytovať <b>kvalitné analýzy</b>, ktoré klientom
-              pomáhajú prijímať správne rozhodnutia, minimalizovať riziká a dosahovať lepšie obchodné výsledky.</p>
+          <div className="vis-text rv-r research-side" style={{transitionDelay:"150ms"}}>
+            <div className="research-card">
+              <div className="about-body">
+                <p>Na základe výsledkov prieskumu pomáhame klientom efektívnejšie nastavovať marketingové kampane,
+                budovať značku, uvádzať nové produkty na trh, lepšie porozumieť svojim zákazníkom a vytvárať
+                biznis stratégie založené na reálnych dátach.</p>
+                <p>Naším cieľom nie je len zbierať informácie, ale poskytovať <b>kvalitné analýzy</b>, ktoré klientom
+                pomáhajú prijímať správne rozhodnutia, minimalizovať riziká a dosahovať lepšie obchodné výsledky.</p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* PROJEKTY — bento grid so spotlight hoverom */}
+      {/* PROJEKTY — flip karty */}
       <section className="sec sec-clients" ref={setRef("projekty")}>
         <div className="wrap center-wrap">
           <p className="eyebrow rv">Projekty</p>
@@ -425,22 +568,14 @@ export default function FehuFireV2() {
           </h2></div>
           <div className="rv" style={{transitionDelay:"160ms"}}><p className="sub-lead center-lead">
             Naše skúsenosti sme získavali pri spolupráci na úspešných projektoch z oblasti športu, médií,
-            e-commerce, distribúcie, gastronómie a podnikania. Každému klientovi prinášame individuálny prístup,
-            strategické myslenie a riešenia zamerané na dlhodobý rast a budovanie silnej značky.
+            e-commerce, distribúcie, gastronómie a podnikania. Prejdite kurzorom po karte a spoznajte detail.
           </p></div>
 
-          <div className="mv-bento rv" ref={bentoRef} onPointerMove={onBentoMove} style={{transitionDelay:"220ms"}}>
-            {BENTO.map((b,i)=>(
-              <div className={`cell ${b.size}`} key={i}>
-                <h3>{b.t}</h3>
-                <p>{b.d}</p>
-                {b.url && <a href={b.url} target="_blank" rel="noreferrer">{b.url.replace("https://","")} →</a>}
-                <img className="bento-emblem" src={LOGO_EMBLEM} alt="" aria-hidden="true" />
-              </div>
-            ))}
+          <div className="flip-grid">
+            {PROJECTS.map((p, i) => <FlipCard p={p} delay={i * 80} key={i} />)}
           </div>
 
-          <div className="about-body rv" style={{margin:"2.5rem auto 0", textAlign:"left"}}>
+          <div className="about-body rv" style={{margin:"2.8rem auto 0", textAlign:"left"}}>
             <p>Tieto spolupráce predstavujú spojenie stratégie, marketingu, brandingu, video produkcie,
             prieskumu trhu a projektového manažmentu. Každý projekt vnímame ako dlhodobé partnerstvo,
             ktorého cieľom je vytvárať merateľné výsledky, posilňovať značku a podporovať rast našich klientov.</p>
@@ -465,7 +600,7 @@ export default function FehuFireV2() {
 
           <Coverflow items={POSTERS} />
 
-          <div className="about-body rv" style={{margin:"3rem auto 0"}}>
+          <div className="about-body rv" style={{margin:"2.6rem auto 0"}}>
             <p>Postaráme sa o <b>kompletný produkčný servis</b> vrátane plánovania, koordinácie, technického
             zabezpečenia, personálu, logistiky a komunikácie s partnermi.</p>
             <p>Súčasťou našich služieb je aj profesionálny <b>bar catering</b> — kompletné nápojové riešenia,
@@ -504,7 +639,7 @@ export default function FehuFireV2() {
         </div>
       </section>
 
-      {/* CTA — kontakt */}
+      {/* CTA — kontakt (glass formulár) */}
       <section className="sec sec-cta" ref={setRef("kontakt")}>
         <div className="orbit-badge">
           <svg viewBox="0 0 120 120" className="badge-ring">
@@ -520,22 +655,39 @@ export default function FehuFireV2() {
           Posuňme vašu firmu <span className="serif-it">roky dopredu</span>.
         </h2>
         <p className="cta-sub rv" style={{transitionDelay:"180ms"}}>Bezplatná konzultácia do 48 hodín. Žiadne záväzky.</p>
-        <div className="cta-form rv" style={{transitionDelay:"260ms"}}>
-          <div className="cta-fields">
-            <input className="cta-input" placeholder="Meno a priezvisko" />
-            <input className="cta-input" placeholder="E-mail / telefón" />
-            <select className="cta-input cta-select">
-              <option value="">Typ spolupráce</option>
-              <option>Video / dokumenty</option>
-              <option>Prieskum trhu</option>
-              <option>Eventy</option>
-              <option>Médiá</option>
-              <option>Broadcast & Podcast</option>
-              <option>Komplexná spolupráca</option>
-            </select>
+
+        <div className="v2-form rv" style={{transitionDelay:"260ms"}}>
+          <div className="v2-form-grid">
+            <label className="v2-field">
+              <span>Meno a priezvisko</span>
+              <input placeholder="Ján Novák" />
+            </label>
+            <label className="v2-field">
+              <span>E-mail / telefón</span>
+              <input placeholder="jan@firma.sk" />
+            </label>
+            <label className="v2-field full">
+              <span>Typ spolupráce</span>
+              <select defaultValue="">
+                <option value="" disabled>Vyberte oblasť…</option>
+                <option>Video / dokumenty</option>
+                <option>Prieskum trhu</option>
+                <option>Eventy</option>
+                <option>Médiá</option>
+                <option>Broadcast & Podcast</option>
+                <option>Komplexná spolupráca</option>
+              </select>
+            </label>
+            <label className="v2-field full">
+              <span>Správa</span>
+              <textarea rows={4} placeholder="Povedzte nám o vašom projekte…" />
+            </label>
           </div>
-          <button className="cta-btn">Odoslať dopyt <span className="arr">→</span></button>
+          <Magnetic>
+            <button className="cta-btn v2-submit">Odoslať dopyt <span className="arr">→</span></button>
+          </Magnetic>
         </div>
+
         <div className="cta-trust rv" style={{transitionDelay:"340ms"}}>
           <span>🔒 Vaše dáta sú v bezpečí</span>
           <span>⚡ Odpoveď do 24h</span>
@@ -546,10 +698,16 @@ export default function FehuFireV2() {
         </p>
       </section>
 
-      {/* FOOTER */}
-      <footer className="footer">
+      {/* FOOTER — footer-mega štýl */}
+      <footer className="footer v2-footer">
+        <div className="foot-hero rv">
+          <h2 className="foot-hero-head">Poďme <span className="serif-it">tvoriť</span> spolu.</h2>
+          <Magnetic>
+            <button className="hero-btn" onClick={() => scrollTo("kontakt")}>Napíšte nám <span className="arr">→</span></button>
+          </Magnetic>
+        </div>
         <div className="foot-top">
-          <div className="foot-brand">
+          <div className="foot-brand rv" style={{transitionDelay:"60ms"}}>
             <div className="logo"><img className="logo-rune-img" src={LOGO_FULL} alt="FEHU Prosperity" /></div>
             <p className="foot-sign"><span className="serif-it">Prihláste sa</span> a využite silu FEHU.</p>
             <div className="foot-form">
@@ -558,7 +716,7 @@ export default function FehuFireV2() {
             </div>
           </div>
           <div className="foot-cols">
-            <div className="foot-col">
+            <div className="foot-col rv" style={{transitionDelay:"140ms"}}>
               <h4>Služby</h4>
               <button onClick={()=>scrollTo("video")}>Video / dokumenty</button>
               <button onClick={()=>scrollTo("prieskum")}>Prieskum trhu</button>
@@ -566,18 +724,23 @@ export default function FehuFireV2() {
               <button onClick={()=>scrollTo("media")}>Médiá</button>
               <button onClick={()=>scrollTo("broadcast")}>Broadcast & Podcast</button>
             </div>
-            <div className="foot-col">
+            <div className="foot-col rv" style={{transitionDelay:"220ms"}}>
               <h4>Spoločnosť</h4>
               <button onClick={()=>scrollTo("onas")}>O nás</button>
               <button onClick={()=>scrollTo("projekty")}>Projekty</button>
               <button onClick={()=>scrollTo("kontakt")}>Kontakt</button>
+              <button onClick={()=>window.open("mailto:office@fehuprosperity.eu")}>office@fehuprosperity.eu</button>
             </div>
           </div>
         </div>
         <div className="foot-bottom">
-          <span>© 2026 FEHU. Všetky práva vyhradené.</span>
+          <span>© {new Date().getFullYear()} FEHU. Všetky práva vyhradené.</span>
           <span>Bratislava · Praha · Viedeň</span>
         </div>
+        <Magnetic strength={12} className="scroll-top-holder">
+          <button className="scroll-top" onClick={() => scrollTo("top")} aria-label="Späť hore">↑</button>
+        </Magnetic>
+        <div className="foot-giant" aria-hidden="true">FEHU</div>
       </footer>
     </div>
   );
@@ -587,6 +750,18 @@ export default function FehuFireV2() {
    V2 CSS — komponenty z COMPONENT SITE vo FEHU palete
    ============================================================ */
 const V2_CSS = `
+/* ── Cursor Trail ── */
+.mv-trail{position:fixed;inset:0;pointer-events:none;z-index:996;mix-blend-mode:screen;}
+
+/* ── Scroll Progress ── */
+.mv-progress{position:fixed;top:0;left:0;right:0;height:3px;z-index:200;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent),#ffd27a);
+  transform-origin:0 50%;transform:scaleX(0);
+  box-shadow:0 0 12px color-mix(in srgb,var(--accent) 60%, transparent);}
+
+/* ── Magnetic ── */
+.mv-magnet{display:inline-block;transition:transform .3s cubic-bezier(.22,1,.36,1);will-change:transform;}
+
 /* ── Card 3D Tilt ── */
 .mv-tilt{position:relative;transform-style:preserve-3d;will-change:transform;
   transition:transform .25s ease-out;overflow:hidden;height:100%;}
@@ -594,53 +769,90 @@ const V2_CSS = `
 .tilt-holder{display:flex;}
 .tilt-holder .pillar-card{flex:1;}
 
-/* ── Bento Grid (spotlight hover) ── */
-.mv-bento{display:grid;gap:16px;grid-template-columns:repeat(4,1fr);grid-auto-rows:155px;
-  margin-top:2.5rem;text-align:left;}
-.mv-bento .cell{position:relative;border-radius:18px;border:1px solid var(--line);
-  background:var(--bg2);padding:1.3rem;overflow:hidden;transition:border-color .3s;}
-.mv-bento .cell::before{content:"";position:absolute;inset:0;opacity:0;transition:opacity .3s;
-  background:radial-gradient(320px circle at var(--bx,50%) var(--by,50%), color-mix(in srgb,var(--accent) 14%, transparent), transparent 60%);}
-.mv-bento .cell:hover{border-color:color-mix(in srgb,var(--accent) 55%, transparent);}
-.mv-bento .cell:hover::before{opacity:1;}
-.mv-bento .wide{grid-column:span 2;}
-.mv-bento .tall{grid-row:span 2;}
-.mv-bento .big{grid-column:span 2;grid-row:span 2;}
-.mv-bento h3{margin:0 0 .45rem;font-size:1.02rem;font-weight:800;letter-spacing:.02em;color:var(--fg);position:relative;z-index:1;}
-.mv-bento .big h3{font-size:1.35rem;}
-.mv-bento p{margin:0;font-size:.84rem;line-height:1.55;color:var(--fg-dim);position:relative;z-index:1;}
-.mv-bento a{display:inline-block;margin-top:.6rem;color:var(--accent);text-decoration:none;
-  font-size:.78rem;font-weight:700;letter-spacing:.04em;position:relative;z-index:1;}
-.mv-bento a:hover{text-decoration:underline;}
-.bento-emblem{position:absolute;right:14px;bottom:12px;height:32px;width:auto;opacity:.45;
-  filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 40%, transparent));}
-.mv-bento .big .bento-emblem{height:52px;opacity:.6;}
-@media(max-width:760px){.mv-bento{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:480px){.mv-bento{grid-template-columns:1fr;grid-auto-rows:auto;}
-  .mv-bento .cell{grid-column:auto !important;grid-row:auto !important;min-height:130px;}}
+/* ── Interaktívny radar ── */
+.ir-ring .radar-l{transition:stroke .3s, opacity .3s;}
+.ir-ring .radar-l.on{stroke:var(--accent);opacity:1;
+  filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 70%, transparent));}
+.ir-ring .radar-node{transition:fill .3s;}
+.ir-ring .radar-node.on{fill:var(--accent);animation:none;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 85%, transparent));}
+.pillar-label{cursor:pointer;transition:background .3s,color .3s,border-color .3s,box-shadow .3s,transform .3s;font-family:inherit;}
+.pillar-label.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);
+  box-shadow:0 0 26px color-mix(in srgb,var(--accent) 55%, transparent);transform:translate(0,0) scale(1.08);}
+.pillar-label.on i{color:var(--accent-ink);}
+.ir-center{animation:irFade .45s ease;max-width:150px;font-weight:700;font-size:.9rem;line-height:1.25;text-align:center;}
+.ir-num{display:block;font-style:normal;color:var(--accent);font-size:.7rem;letter-spacing:.28em;margin-bottom:.3rem;}
+@keyframes irFade{from{opacity:0;transform:translate(-50%,-46%);}to{opacity:1;transform:translate(-50%,-50%);}}
+.pillar-card{transition:border-color .35s, box-shadow .35s;}
+.pillar-card.pc-on{border-color:var(--accent);
+  box-shadow:0 0 34px color-mix(in srgb,var(--accent) 26%, transparent), 0 18px 44px rgba(0,0,0,.45);}
+
+/* ── O nás: zakladateľ (tilt) ── */
+.v2-footer, .founder-card{}
+.mv-tilt.founder-card{border-radius:20px;border:1px solid var(--line);background:var(--bg2);
+  box-shadow:0 24px 60px rgba(0,0,0,.5), 0 0 46px color-mix(in srgb,var(--accent) 9%, transparent);height:auto;}
+.mv-tilt.founder-card img{width:100%;display:block;}
+.mv-tilt.founder-card figcaption{padding:.95rem 1.15rem 1.05rem;display:flex;flex-direction:column;gap:.18rem;}
+.mv-tilt.founder-card b{font-size:1rem;}
+.mv-tilt.founder-card span{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-dim);}
+
+/* ── Prieskum: vyváženie stĺpcov ── */
+.research-side{justify-content:center;}
+.research-card{border:1px solid var(--line);border-radius:20px;padding:1.8rem;
+  background:color-mix(in srgb,var(--bg2) 70%, transparent);position:relative;overflow:hidden;}
+.research-card::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px circle at 85% 0%, color-mix(in srgb,var(--accent) 8%, transparent), transparent 60%);}
+
+/* ── Flip Cards (Projekty) ── */
+.flip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:2.6rem;}
+.flip{perspective:1300px;height:230px;}
+.flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;
+  transition:transform .75s cubic-bezier(.22,1,.36,1);}
+.flip:hover .flip-inner,.flip:focus-within .flip-inner{transform:rotateY(180deg);}
+.flip-front,.flip-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border-radius:18px;border:1px solid var(--line);padding:1.35rem;display:flex;flex-direction:column;
+  align-items:flex-start;justify-content:flex-end;text-align:left;overflow:hidden;}
+.flip-front{background:
+  radial-gradient(320px circle at 85% 15%, color-mix(in srgb,var(--accent) 10%, transparent), transparent 60%),
+  var(--bg2);}
+.flip-front h3{margin:0 0 .3rem;font-size:1.12rem;font-weight:800;letter-spacing:-.01em;color:var(--fg);}
+.flip-cat{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-dim);}
+.flip-hint{position:absolute;top:1.1rem;right:1.2rem;font-size:.7rem;font-weight:700;color:var(--accent);
+  opacity:.75;letter-spacing:.06em;}
+.flip-emblem{position:absolute;top:1rem;left:1.2rem;height:40px;width:auto;opacity:.75;
+  filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 45%, transparent));}
+.flip-back{transform:rotateY(180deg);justify-content:center;gap:.5rem;
+  background:linear-gradient(150deg, color-mix(in srgb,var(--accent-2) 26%, var(--bg2)), var(--bg2) 70%);
+  border-color:color-mix(in srgb,var(--accent) 45%, transparent);}
+.flip-back h3{margin:0;font-size:1rem;font-weight:800;color:var(--fg);}
+.flip-back p{margin:0;font-size:.83rem;line-height:1.55;color:var(--fg-dim);}
+.flip-back a{color:var(--accent);text-decoration:none;font-size:.78rem;font-weight:700;letter-spacing:.04em;}
+.flip-back a:hover{text-decoration:underline;}
+@media(max-width:900px){.flip-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.flip-grid{grid-template-columns:1fr;}.flip{height:210px;}}
 
 /* ── Coverflow 3D slider ── */
-.cf-outer{margin-top:3rem;}
-.cf-stage{position:relative;max-width:920px;margin:0 auto;height:min(560px,120vw);
+.cf-outer{margin-top:1.6rem;}
+.cf-stage{position:relative;max-width:980px;margin:0 auto;
+  height:clamp(500px, 66vw, 620px);
   perspective:1600px;display:flex;align-items:center;justify-content:center;}
-.cf-card{position:absolute;width:min(300px,62vw);border-radius:18px;overflow:hidden;
+.cf-card{position:absolute;width:min(340px,70vw);border-radius:18px;overflow:hidden;
   background:var(--bg2);border:1px solid var(--line);
   box-shadow:0 30px 60px rgba(0,0,0,.55), 0 0 40px color-mix(in srgb,var(--accent) 10%, transparent);
   transition:transform .7s cubic-bezier(.4,0,.2,1),opacity .7s cubic-bezier(.4,0,.2,1),filter .7s cubic-bezier(.4,0,.2,1);
   cursor:pointer;backface-visibility:hidden;}
 .cf-card img{width:100%;display:block;}
-.cf-meta{padding:.65rem .9rem .8rem;text-align:left;}
+.cf-meta{padding:.7rem .95rem .85rem;text-align:left;}
 .cf-date,.cf-venue{display:block;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-dim);}
-.cf-title{font-size:.95rem;font-weight:800;margin:.2rem 0;letter-spacing:-.01em;color:var(--fg);}
-.cf-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:120;
-  width:52px;height:52px;border-radius:50%;border:1px solid var(--line);cursor:pointer;
+.cf-title{font-size:1rem;font-weight:800;margin:.2rem 0;letter-spacing:-.01em;color:var(--fg);}
+.mv-magnet:has(.cf-arrow){position:absolute;left:0;top:calc(50% - 26px);z-index:120;}
+.mv-magnet-right:has(.cf-arrow){left:auto;right:0;}
+.cf-arrow{width:52px;height:52px;border-radius:50%;border:1px solid var(--line);cursor:pointer;
   background:color-mix(in srgb,var(--bg2) 55%, transparent);backdrop-filter:blur(6px);
-  color:var(--fg);font-size:1.5rem;display:grid;place-items:center;transition:all .25s;}
+  color:var(--fg);font-size:1.5rem;display:grid;place-items:center;transition:background .25s,color .25s,border-color .25s;}
 .cf-arrow:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
-.cf-arrow.left{left:0;}
-.cf-arrow.right{right:0;}
-.cf-outer .car-dots{margin-top:1.4rem;}
-@media(max-width:640px){.cf-arrow{width:42px;height:42px;}}
+.cf-outer .car-dots{margin-top:1.3rem;}
+@media(max-width:640px){.cf-arrow{width:42px;height:42px;}.cf-stage{height:clamp(430px,120vw,560px);}}
 
 /* ── Animated Tabs ── */
 .media-tabs-card{text-align:center;}
@@ -681,4 +893,49 @@ const V2_CSS = `
 .acc-num{color:var(--accent);font-size:.8rem;font-weight:700;margin-right:.9rem;letter-spacing:.1em;}
 .acc-body{overflow:hidden;transition:max-height .4s cubic-bezier(.22,1,.36,1);}
 .acc-body p{margin:0 0 1.3rem;color:var(--fg-dim);line-height:1.75;font-size:.95rem;max-width:680px;}
+
+/* ── Kontakt: glass formulár ── */
+.v2-form{width:100%;max-width:620px;margin:0 auto;text-align:left;
+  background:color-mix(in srgb,var(--bg) 30%, transparent);
+  border:1px solid rgba(255,255,255,.22);border-radius:22px;padding:1.7rem 1.7rem 1.6rem;
+  backdrop-filter:blur(14px);box-shadow:0 30px 70px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18);}
+.v2-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-bottom:1.2rem;}
+.v2-field{display:flex;flex-direction:column;gap:.35rem;}
+.v2-field.full{grid-column:1 / -1;}
+.v2-field>span{font-size:.66rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:color-mix(in srgb,var(--accent-ink) 75%, transparent);}
+.v2-field input,.v2-field select,.v2-field textarea{
+  width:100%;box-sizing:border-box;padding:.85rem 1rem;border-radius:12px;font-size:.9rem;font-family:inherit;
+  background:color-mix(in srgb,var(--bg2) 92%, transparent);color:var(--fg);
+  border:1px solid color-mix(in srgb,var(--accent) 22%, transparent);outline:none;resize:vertical;
+  transition:border-color .25s, box-shadow .25s, transform .25s;}
+.v2-field input:focus,.v2-field select:focus,.v2-field textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%, transparent);
+  transform:translateY(-1px);}
+.v2-field input::placeholder,.v2-field textarea::placeholder{color:var(--fg-dim);}
+.v2-submit{display:inline-flex;align-items:center;gap:.5rem;font-size:.95rem;}
+.v2-submit .arr{transition:transform .25s;}
+.v2-submit:hover .arr{transform:translateX(5px);}
+@media(max-width:560px){.v2-form-grid{grid-template-columns:1fr;}.v2-form{padding:1.3rem;}}
+
+/* ── Footer mega ── */
+.v2-footer{position:relative;overflow:hidden;padding-bottom:0;}
+.foot-hero{max-width:1100px;margin:0 auto 3.5rem;display:flex;align-items:center;justify-content:space-between;
+  gap:2rem;flex-wrap:wrap;padding-bottom:2.6rem;border-bottom:1px solid var(--line);}
+.foot-hero-head{margin:0;font-size:clamp(2rem,5vw,3.4rem);font-weight:800;letter-spacing:-.03em;line-height:1.02;}
+.v2-footer .foot-col button{transition:color .2s, transform .25s cubic-bezier(.22,1,.36,1);}
+.v2-footer .foot-col button:hover{color:var(--accent);transform:translateX(6px);}
+.v2-footer .foot-bottom{position:relative;z-index:2;}
+.foot-giant{font-size:clamp(7rem,24vw,21rem);font-weight:900;line-height:.78;text-align:center;
+  letter-spacing:.02em;user-select:none;pointer-events:none;margin-top:1.5rem;
+  color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--accent) 26%, transparent);
+  background:linear-gradient(180deg, color-mix(in srgb,var(--accent) 14%, transparent), transparent 85%);
+  -webkit-background-clip:text;background-clip:text;}
+.scroll-top-holder{position:absolute;right:1.8rem;bottom:5.2rem;z-index:5;}
+.scroll-top{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);cursor:pointer;
+  background:var(--bg2);color:var(--accent);font-size:1.25rem;display:grid;place-items:center;
+  transition:all .25s;box-shadow:0 10px 30px rgba(0,0,0,.4);}
+.scroll-top:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);
+  box-shadow:0 0 28px color-mix(in srgb,var(--accent) 50%, transparent);}
+@media(max-width:640px){.scroll-top-holder{right:1rem;bottom:6rem;}}
 `;
