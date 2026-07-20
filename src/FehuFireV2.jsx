@@ -76,6 +76,34 @@ function ScrollProgress() {
   return <div className="mv-progress" ref={ref} aria-hidden="true" />;
 }
 
+/* ---- Plávajúci Scroll-Top s kruhovým progresom ---- */
+function ScrollTopFab({ onClick }) {
+  const [show, setShow] = useState(false);
+  const circleRef = useRef(null);
+  const C = 2 * Math.PI * 21;
+  useEffect(() => {
+    const onScroll = () => {
+      const h = document.documentElement;
+      const p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+      setShow(h.scrollTop > 40);
+      if (circleRef.current) circleRef.current.style.strokeDashoffset = `${C * (1 - p)}`;
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [C]);
+  return (
+    <button className={`stf ${show ? "on" : ""}`} onClick={onClick} aria-label="Späť hore" title="Späť hore">
+      <svg viewBox="0 0 48 48" className="stf-ring" aria-hidden="true">
+        <circle cx="24" cy="24" r="21" className="stf-track" />
+        <circle cx="24" cy="24" r="21" className="stf-bar" ref={circleRef}
+          style={{ strokeDasharray: C, strokeDashoffset: C }} />
+      </svg>
+      <span className="stf-arrow">↑</span>
+    </button>
+  );
+}
+
 /* ---- Magnetic Button (component site: magnetic-button) ---- */
 function Magnetic({ children, strength = 16, className = "" }) {
   const ref = useRef(null);
@@ -138,7 +166,7 @@ function SplitHead({ segments, className = "big-head" }) {
         s.br
           ? <br key={si} />
           : s.t.split(" ").filter(Boolean).map((w, wi) => (
-              <span className="st-w" key={`${si}-${wi}`}>
+              <span className={`st-w ${/^[.,!?;:]+$/.test(w) ? "st-p" : ""}`} key={`${si}-${wi}`}>
                 <span className={`st-wi ${s.serif ? "serif-it" : ""}`}
                   style={{ transitionDelay: `${(idx++) * 55}ms` }}>{w}</span>
               </span>
@@ -715,7 +743,7 @@ export default function FehuFireV2() {
             {PROJECTS.map((p, i) => <FlipCard p={p} delay={i * 80} key={i} />)}
           </div>
 
-          <div className="about-body rv" style={{margin:"2.8rem auto 0", textAlign:"left"}}>
+          <div className="about-body rv grid-aligned" style={{marginTop:"2.8rem"}}>
             <p>Tieto spolupráce predstavujú spojenie stratégie, marketingu, brandingu, video produkcie,
             prieskumu trhu a projektového manažmentu. Každý projekt vnímame ako dlhodobé partnerstvo,
             ktorého cieľom je vytvárať merateľné výsledky, posilňovať značku a podporovať rast našich klientov.</p>
@@ -806,7 +834,7 @@ export default function FehuFireV2() {
           </svg>
           <div className="badge-core badge-fire">
             <span className="badge-flame" aria-hidden="true" />
-            <img src="/logo-original.png" alt="FEHU" className="badge-rune" />
+            <img src={LOGO_EMBLEM} alt="FEHU" className="badge-rune" />
           </div>
         </div>
         <p className="cta-eyebrow rv" style={{transitionDelay:"0ms"}}>Poďme na obežnú dráhu</p>
@@ -896,11 +924,10 @@ export default function FehuFireV2() {
           <span>© {new Date().getFullYear()} FEHU. Všetky práva vyhradené.</span>
           <span>Bratislava · Praha · Viedeň</span>
         </div>
-        <Magnetic strength={12} className="scroll-top-holder">
-          <button className="scroll-top" onClick={() => scrollTo("top")} aria-label="Späť hore">↑</button>
-        </Magnetic>
         <div className="foot-giant" data-plx="0.06" aria-hidden="true">FEHU</div>
       </footer>
+
+      <ScrollTopFab onClick={() => scrollTo("top")} />
     </div>
   );
 }
@@ -937,6 +964,8 @@ const V2_CSS = `
   transition:transform .7s cubic-bezier(.22,1,.36,1);will-change:transform;}
 .st-head.st-in .st-wi{transform:translateY(0);}
 .center-split{text-align:center;}
+/* interpunkcia sa nelepí s medzerou za predošlé slovo */
+.st-head .st-p{margin-left:-.26em;margin-right:.2em;}
 
 /* ── Parallax bloby ── */
 .plx-blob{position:absolute;border-radius:50%;filter:blur(72px);pointer-events:none;z-index:0;
@@ -957,9 +986,11 @@ const V2_CSS = `
 .ir-ring .radar-node{transition:fill .3s;}
 .ir-ring .radar-node.on{fill:var(--accent);animation:none;
   filter:drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 85%, transparent));}
-.pillar-label{cursor:pointer;transition:background .3s,color .3s,border-color .3s,box-shadow .3s,transform .3s;font-family:inherit;}
+/* pozor: scale cez samostatnú vlastnosť, aby sa nezrušil anchor transform (.pl-top/.pl-br/…) */
+.pillar-label{cursor:pointer;font-family:inherit;transform-origin:center;
+  transition:background .3s,color .3s,border-color .3s,box-shadow .3s,scale .3s;}
 .pillar-label.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);
-  box-shadow:0 0 26px color-mix(in srgb,var(--accent) 55%, transparent);transform:translate(0,0) scale(1.08);}
+  box-shadow:0 0 26px color-mix(in srgb,var(--accent) 55%, transparent);scale:1.08;}
 .pillar-label.on i{color:var(--accent-ink);}
 .ir-center{animation:irFade .45s ease;max-width:150px;font-weight:700;font-size:.9rem;line-height:1.25;text-align:center;}
 .ir-num{display:block;font-style:normal;color:var(--accent);font-size:.7rem;letter-spacing:.28em;margin-bottom:.3rem;}
@@ -1080,13 +1111,13 @@ const V2_CSS = `
 @media(max-width:520px){.research-tiles{grid-template-columns:1fr;}}
 
 /* ── CTA badge: FEHU logo v ohni ── */
-.sec-cta .orbit-badge{width:172px;height:172px;margin-bottom:2.2rem;}
-.sec-cta .badge-text{font-size:8px;letter-spacing:1.4px;}
-.badge-fire{width:96px !important;height:96px !important;overflow:visible !important;
+.sec-cta .orbit-badge{width:210px;height:210px;margin-bottom:2.4rem;}
+.sec-cta .badge-text{font-size:7.6px;letter-spacing:1.5px;}
+.badge-fire{width:116px !important;height:116px !important;overflow:visible !important;
   background:radial-gradient(circle at 50% 42%, #2a1c06, #0c0803 78%) !important;
   box-shadow:0 0 0 1px rgba(244,214,120,.35), 0 0 34px rgba(255,150,40,.45),
     0 0 70px rgba(255,110,20,.25), inset 0 2px 8px rgba(0,0,0,.6);}
-.badge-rune{position:relative;z-index:3;width:60%;height:auto;display:block;
+.badge-rune{position:relative;z-index:3;width:72%;height:auto;display:block;
   animation:runeFire 2.4s ease-in-out infinite;}
 @keyframes runeFire{
   0%,100%{filter:drop-shadow(0 0 9px rgba(255,180,60,.85)) drop-shadow(0 0 20px rgba(255,120,10,.5));transform:scale(1);}
@@ -1101,6 +1132,16 @@ const V2_CSS = `
   to{opacity:1;transform:translateX(-50%) scale(1.08) translateY(-3px);}
 }
 
+/* ── eyebrow divider vždy iba na šírku textu ── */
+.sec .eyebrow{width:fit-content;max-width:100%;}
+.vis-text>.eyebrow,.bc-side>.eyebrow,.tl-side>.eyebrow,
+.video-side>.eyebrow,.onas-main>.eyebrow{align-self:flex-start;}
+.center-wrap>.eyebrow{margin-left:auto;margin-right:auto;}
+
+/* ── text zarovnaný s gridom (Projekty) ── */
+.grid-aligned{max-width:none !important;margin-left:0;margin-right:0;text-align:left;}
+.grid-aligned p{max-width:none;}
+
 /* ── veľkosti nadpisov ── */
 .head-md{font-size:clamp(1.7rem,3.4vw,2.5rem) !important;line-height:1.1;max-width:16ch;}
 .head-one{font-size:clamp(1.5rem,3vw,2.55rem) !important;line-height:1.1;
@@ -1108,12 +1149,14 @@ const V2_CSS = `
 @media(max-width:1100px){.head-one{white-space:normal;}}
 .head-md .st-w,.head-one .st-w{margin-right:.24em;}
 
-/* ── Eventy: menšie medzery, väčší slider ── */
-.sec-cases{padding-top:4rem;padding-bottom:4rem;}
-.sec-cases .sub-lead.center-lead{margin-bottom:.6rem;}
-.cf-outer{margin-top:.4rem;}
-.cf-stage{height:clamp(600px, 62vw, 700px);}
+/* ── Eventy: bez zbytočných medzier, veľký slider ── */
+.sec-cases{padding-top:3.4rem;padding-bottom:3.4rem;}
+.sec-cases .sub-lead.center-lead{margin-bottom:.4rem;}
+.cf-outer{margin-top:0;}
+/* výška presne podľa karty (plagát ~16:9 + meta pruh) → žiadne prázdne pásy */
+.cf-stage{height:calc(min(470px,80vw) * 0.575 + 105px);}
 .cf-card{width:min(470px,80vw);}
+.sec-cases .about-body{margin-top:1.6rem !important;}
 
 /* ── Médiá: vzduch nad sekciou ── */
 .sec-services{padding-top:7rem !important;padding-bottom:5rem !important;}
@@ -1232,11 +1275,29 @@ const V2_CSS = `
   background:linear-gradient(180deg, color-mix(in srgb,var(--accent) 14%, transparent), transparent 85%);
   -webkit-background-clip:text;background-clip:text;
   transform:translateY(var(--plx,0));will-change:transform;}
-.scroll-top-holder{position:absolute;right:1.8rem;bottom:5.2rem;z-index:5;}
-.scroll-top{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);cursor:pointer;
-  background:var(--bg2);color:var(--accent);font-size:1.25rem;display:grid;place-items:center;
-  transition:all .25s;box-shadow:0 10px 30px rgba(0,0,0,.4);}
-.scroll-top:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);
-  box-shadow:0 0 28px color-mix(in srgb,var(--accent) 50%, transparent);}
-@media(max-width:640px){.scroll-top-holder{right:1rem;bottom:6rem;}}
+/* ── plávajúci scroll-top s kruhovým progresom ── */
+.stf{position:fixed;right:20px;bottom:66px;z-index:998;width:52px;height:52px;padding:0;
+  border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;
+  background:color-mix(in srgb,var(--bg2) 92%, transparent);backdrop-filter:blur(8px);
+  box-shadow:0 10px 30px rgba(0,0,0,.5), 0 0 0 1px color-mix(in srgb,var(--accent) 22%, transparent);
+  opacity:0;transform:translateY(14px) scale(.85);pointer-events:none;
+  transition:opacity .35s cubic-bezier(.22,1,.36,1), transform .35s cubic-bezier(.22,1,.36,1), box-shadow .3s;}
+.stf.on{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+.stf:hover{box-shadow:0 12px 34px rgba(0,0,0,.55), 0 0 26px color-mix(in srgb,var(--accent) 45%, transparent),
+  0 0 0 1px var(--accent);}
+.stf-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);}
+.stf-track{fill:none;stroke:color-mix(in srgb,var(--accent) 16%, transparent);stroke-width:2.5;}
+.stf-bar{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;
+  transition:stroke-dashoffset .12s linear;
+  filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent) 65%, transparent));}
+.stf-arrow{position:relative;z-index:1;color:var(--accent);font-size:1.2rem;line-height:1;transition:transform .25s;}
+.stf:hover .stf-arrow{transform:translateY(-2px);}
+@media(max-width:640px){.stf{right:14px;bottom:72px;width:46px;height:46px;}}
+
+/* ── jednoriadkové nadpisy v bočných stĺpcoch ── */
+.bc-side .st-head,.tl-side .st-head,.video-side .st-head{
+  font-size:clamp(1.45rem,2.5vw,2.05rem) !important;line-height:1.12;}
+@media(min-width:961px){
+  .bc-side .st-head,.tl-side .st-head{white-space:nowrap;}
+}
 `;
