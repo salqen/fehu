@@ -36,7 +36,7 @@ const FO_ANGLES = [270, 315, 0, 45, 90, 135, 180, 225];
 const NODES = [
   { id: "onas",      label: "O nás",    icon: <><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/></> },
   { id: "kontakt",   label: "Kontakt",  icon: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></> },
-  { id: "video",     label: "Video / Dokumenty", icon: <><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></> },
+  { id: "video",     label: "Video & Dokumenty", icon: <><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></> },
   { id: "prieskum",  label: "Prieskum", icon: <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></> },
   { id: "projekty",  label: "Projekty", icon: <><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></> },
   { id: "eventy",    label: "Eventy",   icon: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></> },
@@ -47,7 +47,7 @@ const NODES = [
 /* poradie sekcií pre mobilné menu / footer */
 export const MENU = [
   { id: "onas",      label: "O nás" },
-  { id: "video",     label: "Video / Dokumenty" },
+  { id: "video",     label: "Video & Dokumenty" },
   { id: "prieskum",  label: "Prieskum trhu" },
   { id: "projekty",  label: "Projekty" },
   { id: "eventy",    label: "Eventy" },
@@ -55,6 +55,13 @@ export const MENU = [
   { id: "broadcast", label: "Broadcast & Podcast" },
   { id: "kontakt",   label: "Kontakt" },
 ];
+
+/* ---- Navigácia okolo loga ----
+   Klasické poradie čítania: O nás vľavo, Kontakt na konci vpravo.
+   Logo sedí v strede, MENU sa rozdelí na dve rovnaké polovice.   */
+const NAV_HALF = Math.ceil(MENU.length / 2);
+export const NAV_LEFT = MENU.slice(0, NAV_HALF);
+export const NAV_RIGHT = MENU.slice(NAV_HALF);
 
 /* SVG geometria */
 const SIZE = 760;
@@ -335,7 +342,10 @@ const FO_CSS = `
 .fo-sat:hover .fo-sat-icon{ stroke:#ffe0a0; filter:drop-shadow(0 0 9px rgba(255,160,0,.7)); }
 .fo-sat-label{
   font-size:.62rem; letter-spacing:.18em; text-transform:uppercase;
-  color:rgba(226,196,120,.55); transition:color .3s; white-space:nowrap;
+  color:rgba(226,196,120,.55); transition:color .3s;
+  /* dlhé názvy (Broadcast & Podcast, Video & Dokumenty) sa zalomia na dva riadky */
+  white-space:normal; text-align:center; line-height:1.3;
+  max-width:92%; text-wrap:balance;
 }
 .fo-sat:hover .fo-sat-label{ color:rgba(244,222,160,.95); }
 
