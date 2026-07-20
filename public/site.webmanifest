@@ -1,0 +1,15 @@
+{
+  "name": "FEHU Prosperity",
+  "short_name": "FEHU",
+  "description": "Marketingová agentúra — stratégia, branding, video produkcia, eventy a médiá.",
+  "lang": "sk",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0804",
+  "theme_color": "#0a0804",
+  "icons": [
+    { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
