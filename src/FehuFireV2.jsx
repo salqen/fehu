@@ -506,7 +506,6 @@ function ReadMore({ children, className = "", style, more = "Čítať viac", les
 
 /* ---- Timeline (component site: timeline) ----
    Gulička sa zapáli presne vo chvíli, keď k nej dorastie ohnivá čiara.
-<<<<<<< HEAD
    Cez onLit sa tá istá udalosť prenáša aj na pentagon.
    Pozor: obe triedy (is-visible aj is-lit) drží React v stave —
    pridávať ich imperatívne cez classList sa nesmie, prekreslenie ich zmaže. ---- */
@@ -516,13 +515,6 @@ function Timeline({ items, fire = false, onItemEnter, onLit }) {
   const [seen, setSeen] = useState(() => new Set());
   const [lit, setLit] = useState(() => new Set());
   const litRef = useRef(lit);
-=======
-   Cez onLit sa tá istá udalosť prenáša aj na pentagon. ---- */
-function Timeline({ items, fire = false, onItemEnter, onLit }) {
-  const ref = useRef(null);
-  const fillRef = useRef(null);
-  const [lit, setLit] = useState(() => new Set());
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
   const onLitRef = useRef(onLit);
   useEffect(() => { onLitRef.current = onLit; }, [onLit]);
 
@@ -532,7 +524,6 @@ function Timeline({ items, fire = false, onItemEnter, onLit }) {
 
     /* reveal (opacity/posun) zostáva naviazaný na viditeľnosť */
     const io = new IntersectionObserver(es => es.forEach(e => {
-<<<<<<< HEAD
       if (e.isIntersecting) {
         const idx = Number(e.target.dataset.idx);
         setSeen(p => (p.has(idx) ? p : new Set(p).add(idx)));
@@ -541,12 +532,6 @@ function Timeline({ items, fire = false, onItemEnter, onLit }) {
     }), { threshold: .3 });
     const nodes = Array.from(el.querySelectorAll(".tl-item"));
     nodes.forEach(n => io.observe(n));
-=======
-      if (e.isIntersecting) { e.target.classList.add("is-visible"); io.unobserve(e.target); }
-    }), { threshold: .3 });
-    const nodes = Array.from(el.querySelectorAll(".tl-item"));
-    nodes.forEach(i => io.observe(i));
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
 
     let raf = null;
     const onScroll = () => {
@@ -557,13 +542,13 @@ function Timeline({ items, fire = false, onItemEnter, onLit }) {
         const p = Math.min(1, Math.max(0, (window.innerHeight * .7 - r.top) / r.height));
         if (fillRef.current) fillRef.current.style.height = `${p * 100}%`;
 
-        /* dokiaľ čiara siaha v pixeloch od vrchu timeline */
-        const fillPx = p * el.offsetHeight;
-<<<<<<< HEAD
+        /* špička ohnivej čiary v px od vrchu timeline —
+           .mv-timeline__line má top:6px a bottom:6px, preto 6 + p*(H-12) */
+        const tipPx = 6 + p * Math.max(0, el.offsetHeight - 12);
         const add = [];
         nodes.forEach((n, i) => {
-          /* stred guličky: .tl-item::before má top .25rem a výšku 14px */
-          if (!litRef.current.has(i) && fillPx >= n.offsetTop + 11) add.push(i);
+          /* stred guličky: .tl-item::before má top .25rem, výšku 14px → stred na offsetTop+11 */
+          if (!litRef.current.has(i) && tipPx >= n.offsetTop + 11) add.push(i);
         });
         if (add.length) {
           const next = new Set(litRef.current);
@@ -572,21 +557,6 @@ function Timeline({ items, fire = false, onItemEnter, onLit }) {
           setLit(next);
           add.forEach(i => onLitRef.current?.(i));
         }
-=======
-        setLit(prev => {
-          let next = prev;
-          nodes.forEach((n, i) => {
-            /* stred guličky: .tl-item::before má top .25rem a výšku 14px */
-            const dotY = n.offsetTop + 4 + 7;
-            if (fillPx >= dotY && !next.has(i)) {
-              if (next === prev) next = new Set(prev);
-              next.add(i);
-              onLitRef.current?.(i);
-            }
-          });
-          return next;
-        });
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
       });
     };
     onScroll();
@@ -603,12 +573,9 @@ function Timeline({ items, fire = false, onItemEnter, onLit }) {
     <div className="mv-timeline" ref={ref}>
       <div className="mv-timeline__line"><div className="mv-timeline__fill" ref={fillRef} /></div>
       {items.map((it, i) => (
-<<<<<<< HEAD
         <div data-idx={i} key={i}
           className={`tl-item${seen.has(i) ? " is-visible" : ""}${lit.has(i) ? " is-lit" : ""}`}
-=======
-        <div className={`tl-item ${lit.has(i) ? "is-lit" : ""}`} data-idx={i} key={i}
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
+          style={{ transitionDelay: seen.has(i) ? `${i * 90}ms` : "0ms" }}
           onPointerEnter={onItemEnter ? () => onItemEnter(i) : undefined}>
           {fire && <span className="tl-flame" aria-hidden="true"><FlameDot active={lit.has(i)} /></span>}
           <span className="tl-num">{it.n}</span>
@@ -636,21 +603,12 @@ const PILLARS = [
 ];
 
 const PROJECTS = [
-<<<<<<< HEAD
   { t: "RFA – Real Fight Arena", cat: "Šport · Eventy · Broadcast", d: "Kompletná vizuálna identita, promo kampane, event branding, video produkcia a broadcast pre najväčšiu MMA organizáciu na Slovensku.", bg: "/clients/rfa-bg.webp" },
   { t: "Hip Hop Žije Festival", cat: "Hudba · Festival", d: "Najväčší hip-hopový festival na Slovensku — marketing, médiá a jubilejný dokument 10 rokov Hip Hop Žije.", bg: "/clients/hhz-bg.webp" },
   { t: "XBIO", cat: "E-commerce · Brand", d: "Budovanie značky a výkonnostný marketing pre e-shop so zdravou výživou, CBD olejmi a doplnkami.", url: "https://www.xbio.sk", bg: "/clients/xbio-bg.webp" },
   { t: "ThaiSpot", cat: "Wellness · Marketing", d: "Marketing a budovanie značky pre tradičné thajské masáže a wellness v centre Bratislavy.", url: "https://www.thaispot.sk", bg: "/clients/thaispot-bg.webp" },
   { t: "Alchymista Bar", cat: "Gastro · Eventy", d: "Branding, eventy a profesionálny bar catering v spolupráci so skúseným tímom.", url: "https://www.alchymista.pub", bg: "/clients/alchymista-bg.webp" },
   { t: "GS Group Company", cat: "Distribúcia · B2B", d: "Veľkoobchod a distribúcia nápojov pre reštaurácie, hotely, bary a gastro prevádzky.", url: "https://www.gsgc.eu", bg: "/clients/gsgc-bg.webp" },
-=======
-  { t: "RFA – Real Fight Arena", cat: "Šport · Eventy · Broadcast", d: "Kompletná vizuálna identita, promo kampane, event branding, video produkcia a broadcast pre najväčšiu MMA organizáciu na Slovensku." },
-  { t: "Hip Hop Žije Festival", cat: "Hudba · Festival", d: "Najväčší hip-hopový festival na Slovensku — marketing, médiá a jubilejný dokument 10 rokov Hip Hop Žije." },
-  { t: "XBIO", cat: "E-commerce · Brand", d: "Budovanie značky a výkonnostný marketing pre e-shop so zdravou výživou, CBD olejmi a doplnkami.", url: "https://www.xbio.sk", logo: "/clients/xbio.webp", bg: "/clients/xbio-bg.webp" },
-  { t: "ThaiSpot", cat: "Wellness · Marketing", d: "Marketing a budovanie značky pre tradičné thajské masáže a wellness v centre Bratislavy.", url: "https://www.thaispot.sk", logo: "/clients/thaispot.webp", bg: "/clients/thaispot-bg.webp" },
-  { t: "Alchymista Bar", cat: "Gastro · Eventy", d: "Branding, eventy a profesionálny bar catering v spolupráci so skúseným tímom.", url: "https://www.alchymista.pub", logo: "/clients/alchymista.webp", bg: "/clients/alchymista-bg.webp" },
-  { t: "GS Group Company", cat: "Distribúcia · B2B", d: "Veľkoobchod a distribúcia nápojov pre reštaurácie, hotely, bary a gastro prevádzky.", url: "https://www.gsgc.eu", logo: "/clients/gsgc.webp", bg: "/clients/gsgc-bg.webp" },
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
 ];
 
 const MEDIA_ITEMS = [
@@ -681,7 +639,6 @@ const CONTACT_EMAIL = "office@fehuprosperity.eu";
 export default function FehuFireV2() {
   const [dark, setDark] = useState(true);
   const [navOpen, setNavOpen] = useState(false);
-<<<<<<< HEAD
   /* navigácia po odscrollovaní zmatnie */
   const [navScrolled, setNavScrolled] = useState(false);
   useEffect(() => {
@@ -690,8 +647,6 @@ export default function FehuFireV2() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-=======
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
   /* cookies + právne dokumenty */
   const [legal, setLegal] = useState({ open: false, tab: "cookies" });
   const [ckSignal, setCkSignal] = useState(0);
@@ -749,11 +704,7 @@ export default function FehuFireV2() {
       <CursorTrail />
 
       {/* NAV — logo v strede, sekcie okolo neho podľa kruhu */}
-<<<<<<< HEAD
       <nav className={`nav nav-orbit${navScrolled ? " is-scrolled" : ""}`}>
-=======
-      <nav className="nav nav-orbit">
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
         <div className="nav-arc nav-arc-l">
           {NAV_LEFT.map(n => (
             <button key={n.id} className="nav-sec" onClick={() => scrollTo(n.id)}>{n.label}</button>
@@ -1227,7 +1178,6 @@ const V2_CSS = `
 
 /* ── NAV: logo v strede, sekcie v dvoch oblúkoch okolo neho ── */
 .nav-orbit{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
-<<<<<<< HEAD
   column-gap:1.1rem;position:fixed;top:0;left:0;right:0;z-index:50;
   transition:background .45s ease, backdrop-filter .45s ease,
     border-color .45s ease, padding .35s ease;}
@@ -1240,9 +1190,6 @@ const V2_CSS = `
   padding-top:.62rem;padding-bottom:.62rem;
   box-shadow:0 10px 34px rgba(0,0,0,.28);}
 .nav-orbit.is-scrolled .logo-wide-img{height:28px;transition:height .35s ease;}
-=======
-  column-gap:1.1rem;position:relative;}
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
 .nav-arc{display:flex;align-items:center;gap:.15rem;min-width:0;}
 .nav-arc-l{justify-content:flex-end;}
 .nav-arc-r{justify-content:flex-start;}
@@ -1252,8 +1199,9 @@ const V2_CSS = `
   color:var(--fg-dim);transition:color .22s, background .22s, transform .22s cubic-bezier(.22,1,.36,1);}
 .nav-sec:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 10%, transparent);
   transform:translateY(-1px);}
-/* utility (téma + CTA) sedia úplne vpravo, mimo mriežky, aby logo zostalo na strede */
-.nav-orbit .nav-right{position:absolute;right:0;top:50%;transform:translateY(-50%);}
+/* utility (téma + CTA) sedia vpravo, mimo mriežky, aby logo zostalo na strede —
+   odsadené o padding navu, nech CTA nie je nalepené na okraji */
+.nav-orbit .nav-right{position:absolute;right:1.6rem;top:50%;transform:translateY(-50%);}
 .nav-cta{white-space:nowrap;}
 
 /* postupné zjednodušovanie pri užších obrazovkách */
@@ -1396,20 +1344,12 @@ const V2_CSS = `
   filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 45%, transparent));}
 /* ── logo klienta + fotka na pozadí karty ── */
 .flip-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;
-<<<<<<< HEAD
   opacity:.42;transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);}
 /* prekryv drží text čitateľný aj nad fotkou */
 .flip-front::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(180deg, color-mix(in srgb,var(--bg2) 30%, transparent) 0%,
     color-mix(in srgb,var(--bg2) 82%, transparent) 58%, var(--bg2) 100%);}
 .flip:hover .flip-bg{opacity:.62;transform:scale(1.06);}
-=======
-  opacity:.22;transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);}
-.flip-front::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:linear-gradient(180deg, color-mix(in srgb,var(--bg2) 45%, transparent) 0%,
-    color-mix(in srgb,var(--bg2) 88%, transparent) 62%, var(--bg2) 100%);}
-.flip:hover .flip-bg{opacity:.34;transform:scale(1.06);}
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
 /* pozor: iba z-index — position sa tu nesmie prepisovať,
    inak emblém aj logo vypadnú z ľavého horného rohu */
 .flip-front h3,.flip-cat{position:relative;z-index:2;}
@@ -1602,6 +1542,7 @@ const V2_CSS = `
   transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1);}
 .tl-item:last-child{padding-bottom:.4rem;}
 .tl-item::before{content:"";position:absolute;left:-2.6rem;top:.25rem;width:14px;height:14px;margin-left:4px;
+  box-sizing:border-box; /* stred guličky presne na čiare (11px) */
   border-radius:50%;background:var(--bg);
   border:3px solid color-mix(in srgb,var(--accent) 30%, transparent);
   transition:box-shadow .9s cubic-bezier(.22,1,.36,1), border-color .9s cubic-bezier(.22,1,.36,1);}
@@ -1653,16 +1594,7 @@ const V2_CSS = `
   font-size:.7rem;color:var(--fg-dim);transition:color .22s;}
 .foot-legal button:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px;}
 @media(max-width:720px){.v2-footer .foot-bottom{justify-content:center;text-align:center;}}
-<<<<<<< HEAD
 /* (obrie textové FEHU v pätičke odstránené) */
-=======
-.foot-giant{font-size:clamp(7rem,24vw,21rem);font-weight:900;line-height:.78;text-align:center;
-  letter-spacing:.02em;user-select:none;pointer-events:none;margin-top:1.5rem;
-  color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--accent) 26%, transparent);
-  background:linear-gradient(180deg, color-mix(in srgb,var(--accent) 14%, transparent), transparent 85%);
-  -webkit-background-clip:text;background-clip:text;
-  transform:translateY(var(--plx,0));will-change:transform;}
->>>>>>> 3ea2fad7771ba62ce0da280952a69414ef0e061f
 /* ── plávajúci scroll-top s kruhovým progresom ── */
 .stf{position:fixed;right:20px;bottom:66px;z-index:998;width:52px;height:52px;padding:0;
   border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;

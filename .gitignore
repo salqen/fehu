@@ -5,3 +5,4 @@ vite.config.js.timestamp-*
 *.local
 .vercel
 .netlify
+src/*conflicted copy*.jsx
